@@ -1076,8 +1076,13 @@ const CHECKIN_QUOTES=[
   '去热爱我所热爱的一切'
 ];
 function checkinQuote(){
-  const ds=today();let h=0;for(let i=0;i<ds.length;i++)h=(h*31+ds.charCodeAt(i))>>>0;
-  return CHECKIN_QUOTES[h%CHECKIN_QUOTES.length];
+  // 每天随机抽一句：当天首次生成并记忆，之后同一天稳定显示，隔天重抽
+  const ds=today();
+  const cache=DB.get('checkin_quote',{});
+  if(cache.ds===ds && cache.text) return cache.text;
+  const text=CHECKIN_QUOTES[Math.floor(Math.random()*CHECKIN_QUOTES.length)];
+  DB.set('checkin_quote',{ds,text});
+  return text;
 }
 function doCheckin(){
   if(isCheckedIn(today()))return;
