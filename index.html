@@ -501,12 +501,23 @@ textarea.input{resize:vertical;min-height:90px;line-height:1.65}
 .cal-day.today{border-color:var(--pink-d)}
 .cal-day.selected{background:linear-gradient(135deg,var(--pink),var(--purple));color:#fff}
 .cal-day .d-num{font-weight:600}
-.cal-day .d-dot{width:5px;height:5px;border-radius:50%;background:var(--line)}
-.cal-day.full .d-dot{background:var(--green)}
-.cal-day.partial .d-dot{background:var(--yellow)}
+.cal-day .d-dot{width:6px;height:6px;border-radius:50%;background:var(--line);transition:all .2s}
+/* 三种完成状态：明显区分 */
+.cal-day.full{background:rgba(72,199,142,.16);border-color:var(--green)}
+.cal-day.full .d-dot{background:var(--green);width:9px;height:9px}
+.cal-day.partial{background:rgba(255,186,73,.16);border-color:var(--yellow)}
+.cal-day.partial .d-dot{background:var(--yellow);width:7px;height:7px}
 .cal-day.none .d-dot{background:var(--line)}
 .cal-day .d-pct{font-size:9px;color:var(--text-3)}
 .cal-day.selected .d-pct{color:rgba(255,255,255,.8)}
+
+/* 签到小窗口 */
+.checkin-mini{padding:16px 18px}
+.checkin-mini-row{display:flex;align-items:center;gap:14px}
+.checkin-emoji{font-size:34px;line-height:1;flex-shrink:0;transition:transform .3s}
+.checkin-mini-info{flex:1;min-width:0}
+.checkin-mini-title{font-size:15px;font-weight:700;color:var(--text-1)}
+.checkin-mini-sub{font-size:12px;color:var(--text-3);margin-top:2px}
 
 .day-detail-box{
   background:var(--card-2);
@@ -585,15 +596,6 @@ textarea.input{resize:vertical;min-height:90px;line-height:1.65}
 @media(max-width:768px){.month-stat-grid{grid-template-columns:repeat(2,1fr)}}
 
 /* checkin */
-.checkin-box{position:relative;overflow:hidden}
-.checkin-box::before{
-  content:'';position:absolute;top:-40px;right:-40px;width:120px;height:120px;
-  background:radial-gradient(circle,rgba(232,180,184,.25),transparent 70%);border-radius:50%;
-}
-.checkin-box::after{
-  content:'';position:absolute;bottom:-30px;left:-30px;width:100px;height:100px;
-  background:radial-gradient(circle,rgba(184,169,201,.2),transparent 70%);border-radius:50%;
-}
 #checkinBtn:disabled{cursor:default}
 </style>
 </head>
@@ -606,7 +608,7 @@ textarea.input{resize:vertical;min-height:90px;line-height:1.65}
       <div class="date" id="sideDate"></div>
     </div>
     <nav class="menu" id="menu">
-      <button class="menu-item active" data-view="plan"><span class="icon">📋</span><span class="menu-text">签到</span></button>
+      <button class="menu-item active" data-view="plan"><span class="icon">📋</span><span class="menu-text">每日计划</span></button>
       <button class="menu-item" data-view="english"><span class="icon">📝</span><span class="menu-text">学习</span></button>
       <button class="menu-item" data-view="sport"><span class="icon">🏃</span><span class="menu-text">运动打卡</span></button>
       <button class="menu-item" data-view="read"><span class="icon">📖</span><span class="menu-text">阅读</span></button>
@@ -642,27 +644,44 @@ textarea.input{resize:vertical;min-height:90px;line-height:1.65}
       </div>
     </div>
 
-    <!-- 签到 -->
+    <!-- 每日计划 -->
     <section class="view active" id="view-plan">
       <div class="page-header">
-        <h2>签到</h2>
-        <div class="desc">每天点击签到，记录你的坚持 ✨</div>
+        <h2>每日计划</h2>
+        <div class="desc">输入任务，完成后打勾</div>
         <div class="row">
           <span class="badge" id="planStreak">🔥 连续 0 天</span>
+          <div class="progress-wrap">
+            <div class="pbar"><div class="fill" id="planTopBar" style="width:0%"></div></div>
+            <div class="txt"><span>今日进度</span><span id="planTopPct">0%</span></div>
+          </div>
         </div>
       </div>
-      <div class="card">
-        <div class="checkin-box" style="text-align:center;padding:30px 20px">
-          <div style="font-size:64px;margin-bottom:12px" id="checkinEmoji">🌱</div>
-          <div style="font-size:18px;font-weight:600;margin-bottom:8px" id="checkinTitle">今日尚未签到</div>
-          <div style="font-size:13px;color:var(--text-3);margin-bottom:20px" id="checkinSub">点击按钮，种下今天的小进步</div>
-          <button class="btn btn-pink" id="checkinBtn" onclick="doCheckin()" style="padding:14px 36px;font-size:15px;border-radius:30px">今日签到</button>
+
+      <!-- 签到小窗口 -->
+      <div class="card checkin-mini">
+        <div class="checkin-mini-row">
+          <div class="checkin-emoji" id="checkinEmoji">🌱</div>
+          <div class="checkin-mini-info">
+            <div class="checkin-mini-title" id="checkinTitle">今日签到</div>
+            <div class="checkin-mini-sub" id="checkinSub">点一下，记录今天来过 ✨</div>
+          </div>
+          <button class="btn btn-pink btn-sm" id="checkinBtn" onclick="doCheckin()">签到</button>
+        </div>
+        <div class="progress-wrap mt-12">
+          <div class="pbar"><div class="fill" id="checkinMonthBar" style="width:0%"></div></div>
+          <div class="txt"><span>本月签到</span><span id="checkinMonthTxt">0 / 0 天</span></div>
         </div>
       </div>
+
       <div class="card">
-        <div class="card-title">📅 本月签到</div>
-        <div class="cal-grid" id="checkinWeekHead"></div>
-        <div class="cal-grid mt-12" id="checkinGrid"></div>
+        <div class="card-title"><span class="sub" id="planStat">0/0</span></div>
+        <div class="flex" style="margin-bottom:14px">
+          <input class="input" id="planInput" placeholder="输入任务，回车保存" style="flex:1">
+          <button class="btn btn-pink" onclick="addPlan()">添加</button>
+        </div>
+        <div id="planList"></div>
+        <button class="btn btn-ghost btn-sm mt-16" onclick="resetPlan()">↻ 重置今日任务</button>
       </div>
     </section>
 
@@ -880,10 +899,10 @@ textarea.input{resize:vertical;min-height:90px;line-height:1.65}
           </div>
           <div class="cal-grid" id="calWeekHead"></div>
           <div class="cal-grid mt-12" id="calGrid"></div>
-          <div class="flex mt-16" style="gap:16px">
-            <span class="flex" style="gap:6px"><span style="width:10px;height:10px;border-radius:50%;background:var(--green);display:inline-block"></span><span class="muted">全部完成</span></span>
-            <span class="flex" style="gap:6px"><span style="width:10px;height:10px;border-radius:50%;background:var(--yellow);display:inline-block"></span><span class="muted">部分完成</span></span>
-            <span class="flex" style="gap:6px"><span style="width:10px;height:10px;border-radius:50%;background:var(--line);display:inline-block"></span><span class="muted">未打卡</span></span>
+          <div class="flex mt-16" style="gap:18px">
+            <span class="flex" style="gap:6px"><span style="width:12px;height:12px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px rgba(72,199,142,.18);display:inline-block"></span><span class="muted" style="font-weight:600">全部完成</span></span>
+            <span class="flex" style="gap:6px"><span style="width:12px;height:12px;border-radius:50%;background:var(--yellow);box-shadow:0 0 0 3px rgba(255,186,73,.18);display:inline-block"></span><span class="muted" style="font-weight:600">部分完成</span></span>
+            <span class="flex" style="gap:6px"><span style="width:12px;height:12px;border-radius:50%;background:var(--line);display:inline-block"></span><span class="muted" style="font-weight:600">未打卡</span></span>
           </div>
         </div>
         <div class="card">
@@ -967,6 +986,34 @@ function renderTop(){
   document.getElementById('ringPct').textContent=pct+'%';
 }
 
+/* ===== 每日计划 ===== */
+function addPlan(){
+  const inp=document.getElementById('planInput');const v=inp.value.trim();if(!v)return;
+  const plans=DB.get('plan',[]);plans.push({id:Date.now(),text:v,done:false});DB.set('plan',plans);
+  inp.value='';renderPlan();renderTop();
+}
+function togglePlan(id){
+  const plans=DB.get('plan',[]);const p=plans.find(x=>x.id===id);if(p)p.done=!p.done;DB.set('plan',plans);
+  recordToday('plan',plans.filter(x=>x.done).length);renderPlan();renderTop();
+}
+function delPlan(id){DB.set('plan',DB.get('plan',[]).filter(x=>x.id!==id));renderPlan();renderTop()}
+function resetPlan(){if(!confirm('确定重置当日所有任务？'))return;DB.set('plan',[]);renderPlan();renderTop();toast('已重置')}
+function renderPlan(){
+  const plans=DB.get('plan',[]);const done=plans.filter(p=>p.done).length;const total=plans.length;const pct=total?Math.round(done/total*100):0;
+  document.getElementById('planStat').textContent=`${done}/${total}`;
+  document.getElementById('planStreak').textContent=`🔥 连续 ${calcStreak('plan')} 天`;
+  document.getElementById('planTopBar').style.width=pct+'%';
+  document.getElementById('planTopPct').textContent=pct+'%';
+  const list=document.getElementById('planList');
+  list.innerHTML=plans.length?plans.map(p=>`
+    <div class="task-item ${p.done?'done':''}">
+      <div class="checkbox ${p.done?'checked':''}" onclick="togglePlan(${p.id})"></div>
+      <div class="task-text">${esc(p.text)}</div>
+      <span class="task-del" onclick="delPlan(${p.id})">×</span>
+    </div>`).join(''):'<div class="empty-hint">暂无任务，添加今日待办</div>';
+}
+document.getElementById('planInput').addEventListener('keydown',e=>{if(e.key==='Enter')addPlan()});
+
 /* ===== 签到 ===== */
 function isCheckedIn(ds){return !!DB.get('checkin_records',{})[ds];}
 function calcCheckinStreak(){
@@ -974,20 +1021,21 @@ function calcCheckinStreak(){
   while(true){const ds=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;if(rec[ds]){streak++;d.setDate(d.getDate()-1)}else break;}
   return streak;
 }
+function checkinMonthStats(){
+  const d=new Date();const y=d.getFullYear(),m=d.getMonth();const days=new Date(y,m+1,0).getDate();
+  const rec=DB.get('checkin_records',{});let c=0;
+  for(let day=1;day<=days;day++){const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;if(rec[ds])c++;}
+  const pct=Math.round(c/days*100);
+  const bar=document.getElementById('checkinMonthBar'),txt=document.getElementById('checkinMonthTxt');
+  if(bar)bar.style.width=pct+'%';
+  if(txt)txt.textContent=`${c} / ${days} 天`;
+}
 function doCheckin(){
   if(isCheckedIn(today()))return;
   const rec=DB.get('checkin_records',{});rec[today()]=true;DB.set('checkin_records',rec);
-  document.getElementById('checkinBtn').textContent='今日已签到 ✓';
-  document.getElementById('checkinBtn').disabled=true;
-  document.getElementById('checkinBtn').style.opacity='0.6';
-  document.getElementById('checkinTitle').textContent='今日已签到，真棒！';
-  document.getElementById('checkinEmoji').textContent='🌸';
-  document.getElementById('checkinSub').textContent='继续保持，明天也要加油哦';
-  document.getElementById('planStreak').textContent=`🔥 连续 ${calcCheckinStreak()} 天`;
-  renderCheckinCal();renderCal();renderTop();toast('签到成功 🎉');
+  renderCheckin();renderCal();renderTop();toast('签到成功 🎉');
 }
 function renderCheckin(){
-  document.getElementById('planStreak').textContent=`🔥 连续 ${calcCheckinStreak()} 天`;
   const checked=isCheckedIn(today());
   const btn=document.getElementById('checkinBtn');
   if(checked){
@@ -996,25 +1044,12 @@ function renderCheckin(){
     document.getElementById('checkinEmoji').textContent='🌸';
     document.getElementById('checkinSub').textContent='继续保持，明天也要加油哦';
   }else{
-    btn.textContent='今日签到';btn.disabled=false;btn.style.opacity='1';
-    document.getElementById('checkinTitle').textContent='今日尚未签到';
+    btn.textContent='签到';btn.disabled=false;btn.style.opacity='1';
+    document.getElementById('checkinTitle').textContent='今日签到';
     document.getElementById('checkinEmoji').textContent='🌱';
-    document.getElementById('checkinSub').textContent='点击按钮，种下今天的小进步';
+    document.getElementById('checkinSub').textContent='点一下，记录今天来过 ✨';
   }
-  renderCheckinCal();
-}
-function renderCheckinCal(){
-  const d=new Date();
-  document.getElementById('checkinWeekHead').innerHTML=['日','一','二','三','四','五','六'].map(w=>`<div class="cal-head">${w}</div>`).join('');
-  const first=new Date(d.getFullYear(),d.getMonth(),1).getDay();const days=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();
-  let html='';for(let i=0;i<first;i++)html+='<div class="cal-day empty"></div>';
-  const rec=DB.get('checkin_records',{});
-  for(let day=1;day<=days;day++){
-    const ds=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-    const checked=rec[ds];const isToday=ds===today();
-    html+=`<div class="cal-day ${checked?'full':''} ${isToday?'today':''}"><div class="d-num">${day}</div><div class="d-dot"></div></div>`;
-  }
-  document.getElementById('checkinGrid').innerHTML=html;
+  checkinMonthStats();
 }
 
 /* ===== 学习 ===== */
@@ -1272,8 +1307,14 @@ function renderCal(){
   monthStats();
 }
 function dayStats(ds){
-  const done=(isCheckedIn(ds)?1:0)+(DB.get('word_records',{})[ds]||0)+(DB.get('train_records',{})[ds]||0)+(DB.get('book_records',{})[ds]||0)+(DB.get('pod_records',{})[ds]||0);
-  return {done,total:done>0?Math.max(done,1):0};
+  const p=DB.get('plan_records',{})[ds]||0;
+  const w=DB.get('word_records',{})[ds]||0;
+  const t=DB.get('train_records',{})[ds]||0;
+  const b=DB.get('book_records',{})[ds]||0;
+  const pd=DB.get('pod_records',{})[ds]||0;
+  const done=p+w+t+b+pd;
+  const total=DB.get('plan',[]).length+DB.get('words',[]).length+DB.get('trains',[]).length+DB.get('books',[]).length+DB.get('pods',[]).length;
+  return {done,total};
 }
 function monthStats(){
   const y=calDate.getFullYear(),m=calDate.getMonth();
@@ -1303,7 +1344,7 @@ function selectDay(ds){
     <div class="day-detail-row"><span class="lbl">🏃 运动训练</span><span class="val">${t} 项</span></div>
     <div class="day-detail-row"><span class="lbl">📖 阅读</span><span class="val">${b} 项 · ${readMin} 分钟</span></div>
     <div class="day-detail-row"><span class="lbl">🎧 播客</span><span class="val">${pd} 项</span></div>
-    <div class="day-detail-row"><span class="lbl">✅ 当日总打卡</span><span class="val">${checked+w+t+b+pd} 项</span></div>
+    <div class="day-detail-row"><span class="lbl">✅ 当日任务打卡</span><span class="val">${w+t+b+pd} 项（不含签到）</span></div>
     <div class="mt-16"><div class="muted" style="margin-bottom:8px">📔 当日日记</div>${diary?`<div style="background:var(--card);border-radius:8px;padding:12px;font-size:13px;line-height:1.7;white-space:pre-wrap">${esc(diary.mood||'')} ${esc(diary.text||'(无内容)')}</div>`:'<div class="empty-hint">当天无日记</div>'}</div>`;
 }
 function changeMonth(d){calDate.setMonth(calDate.getMonth()+d);renderCal()}
@@ -1398,7 +1439,7 @@ function init(){
     ]);
     DB.set('inited_v3',true);
   }
-  renderTop();renderCheckin();renderWords();renderTrain();renderBook();renderPod();renderDiary();renderCal();renderTimers();selectDay(today());
+  renderTop();renderCheckin();renderPlan();renderWords();renderTrain();renderBook();renderPod();renderDiary();renderCal();renderTimers();selectDay(today());
 }
 init();
 </script>
