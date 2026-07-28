@@ -563,6 +563,38 @@ textarea.input{resize:vertical;min-height:90px;line-height:1.65}
   z-index:200;
 }
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* month stats */
+.month-stat-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:14px;
+}
+.month-stat{
+  background:linear-gradient(135deg,var(--card-2),#fff);
+  border-radius:var(--radius-s);
+  padding:18px 10px;
+  text-align:center;
+  border:1px solid var(--line);
+  transition:all .2s;
+}
+.month-stat:hover{transform:translateY(-2px);box-shadow:var(--shadow-h)}
+.ms-icon{font-size:26px;margin-bottom:6px}
+.ms-num{font-size:22px;font-weight:700;color:var(--text);margin-bottom:2px}
+.ms-label{font-size:11px;color:var(--text-3)}
+@media(max-width:768px){.month-stat-grid{grid-template-columns:repeat(2,1fr)}}
+
+/* checkin */
+.checkin-box{position:relative;overflow:hidden}
+.checkin-box::before{
+  content:'';position:absolute;top:-40px;right:-40px;width:120px;height:120px;
+  background:radial-gradient(circle,rgba(232,180,184,.25),transparent 70%);border-radius:50%;
+}
+.checkin-box::after{
+  content:'';position:absolute;bottom:-30px;left:-30px;width:100px;height:100px;
+  background:radial-gradient(circle,rgba(184,169,201,.2),transparent 70%);border-radius:50%;
+}
+#checkinBtn:disabled{cursor:default}
 </style>
 </head>
 <body>
@@ -574,7 +606,7 @@ textarea.input{resize:vertical;min-height:90px;line-height:1.65}
       <div class="date" id="sideDate"></div>
     </div>
     <nav class="menu" id="menu">
-      <button class="menu-item active" data-view="plan"><span class="icon">📋</span><span class="menu-text">每日计划</span></button>
+      <button class="menu-item active" data-view="plan"><span class="icon">📋</span><span class="menu-text">签到</span></button>
       <button class="menu-item" data-view="english"><span class="icon">📝</span><span class="menu-text">学习</span></button>
       <button class="menu-item" data-view="sport"><span class="icon">🏃</span><span class="menu-text">运动打卡</span></button>
       <button class="menu-item" data-view="read"><span class="icon">📖</span><span class="menu-text">阅读</span></button>
@@ -610,27 +642,27 @@ textarea.input{resize:vertical;min-height:90px;line-height:1.65}
       </div>
     </div>
 
-    <!-- 每日计划 -->
+    <!-- 签到 -->
     <section class="view active" id="view-plan">
       <div class="page-header">
-        <h2>每日计划</h2>
-        <div class="desc">输入任务，完成后打勾</div>
+        <h2>签到</h2>
+        <div class="desc">每天点击签到，记录你的坚持 ✨</div>
         <div class="row">
           <span class="badge" id="planStreak">🔥 连续 0 天</span>
-          <div class="progress-wrap">
-            <div class="pbar"><div class="fill" id="planTopBar" style="width:0%"></div></div>
-            <div class="txt"><span>今日进度</span><span id="planTopPct">0%</span></div>
-          </div>
         </div>
       </div>
       <div class="card">
-        <div class="card-title"><span class="sub" id="planStat">0/0</span></div>
-        <div class="flex" style="margin-bottom:14px">
-          <input class="input" id="planInput" placeholder="输入任务，回车保存" style="flex:1">
-          <button class="btn btn-pink" onclick="addPlan()">添加</button>
+        <div class="checkin-box" style="text-align:center;padding:30px 20px">
+          <div style="font-size:64px;margin-bottom:12px" id="checkinEmoji">🌱</div>
+          <div style="font-size:18px;font-weight:600;margin-bottom:8px" id="checkinTitle">今日尚未签到</div>
+          <div style="font-size:13px;color:var(--text-3);margin-bottom:20px" id="checkinSub">点击按钮，种下今天的小进步</div>
+          <button class="btn btn-pink" id="checkinBtn" onclick="doCheckin()" style="padding:14px 36px;font-size:15px;border-radius:30px">今日签到</button>
         </div>
-        <div id="planList"></div>
-        <button class="btn btn-ghost btn-sm mt-16" onclick="resetPlan()">↻ 重置今日任务</button>
+      </div>
+      <div class="card">
+        <div class="card-title">📅 本月签到</div>
+        <div class="cal-grid" id="checkinWeekHead"></div>
+        <div class="cal-grid mt-12" id="checkinGrid"></div>
       </div>
     </section>
 
@@ -649,6 +681,9 @@ textarea.input{resize:vertical;min-height:90px;line-height:1.65}
       </div>
       <div class="card" id="timerCardEn">
         <div class="card-title">⏱ 学习计时器<span class="sub" id="enTimerTotal">今日 0 分钟</span></div>
+        <div style="text-align:center;margin-bottom:10px">
+          <span style="font-size:12px;color:var(--text-3);background:var(--card-2);padding:5px 12px;border-radius:14px" id="enTimerTarget">未选择任务</span>
+        </div>
         <div class="flex" style="align-items:center;justify-content:center;gap:16px;flex-wrap:wrap">
           <div id="enTimerDisplay" style="font-size:36px;font-weight:700;color:var(--pink-d);font-variant-numeric:tabular-nums;letter-spacing:1px">00:00:00</div>
         </div>
@@ -808,6 +843,31 @@ textarea.input{resize:vertical;min-height:90px;line-height:1.65}
           <span class="badge" id="calMonthLabel">2026年7月</span>
         </div>
       </div>
+      <div class="card">
+        <div class="card-title">📊 本月统计</div>
+        <div class="month-stat-grid">
+          <div class="month-stat">
+            <div class="ms-icon">📝</div>
+            <div class="ms-num" id="monthStudyMin">0</div>
+            <div class="ms-label">学习时长(分)</div>
+          </div>
+          <div class="month-stat">
+            <div class="ms-icon">🏃</div>
+            <div class="ms-num" id="monthTrainDays">0</div>
+            <div class="ms-label">运动天数</div>
+          </div>
+          <div class="month-stat">
+            <div class="ms-icon">📖</div>
+            <div class="ms-num" id="monthReadMin">0</div>
+            <div class="ms-label">阅读时长(分)</div>
+          </div>
+          <div class="month-stat">
+            <div class="ms-icon">🎧</div>
+            <div class="ms-num" id="monthPodDays">0</div>
+            <div class="ms-label">播客天数</div>
+          </div>
+        </div>
+      </div>
       <div class="grid-2">
         <div class="card">
           <div class="card-title" style="margin-bottom:10px">
@@ -887,12 +947,12 @@ function recordToday(prefix,count){
 
 /* overall */
 function calcOverall(){
-  const planDone=DB.get('plan',[]).filter(p=>p.done).length,planTotal=DB.get('plan',[]).length;
+  const checkin=isCheckedIn(today())?1:0;
   const wordDone=DB.get('words',[]).filter(w=>isDoneToday('word',w.id)).length,wordTotal=DB.get('words',[]).length;
   const trainDone=DB.get('trains',[]).filter(t=>isDoneToday('train',t.id)).length,trainTotal=DB.get('trains',[]).length;
   const bookDone=DB.get('books',[]).filter(b=>isDoneToday('book',b.id)).length,bookTotal=DB.get('books',[]).length;
   const podDone=DB.get('pods',[]).filter(p=>isDoneToday('pod',p.id)).length,podTotal=DB.get('pods',[]).length;
-  return {done:planDone+wordDone+trainDone+bookDone+podDone,total:planTotal+wordTotal+trainTotal+bookTotal+podTotal};
+  return {done:checkin+wordDone+trainDone+bookDone+podDone,total:1+wordTotal+trainTotal+bookTotal+podTotal};
 }
 function renderTop(){
   const d=new Date();
@@ -907,33 +967,55 @@ function renderTop(){
   document.getElementById('ringPct').textContent=pct+'%';
 }
 
-/* ===== 每日计划 ===== */
-function addPlan(){
-  const inp=document.getElementById('planInput');const v=inp.value.trim();if(!v)return;
-  const plans=DB.get('plan',[]);plans.push({id:Date.now(),text:v,done:false});DB.set('plan',plans);
-  inp.value='';renderPlan();renderTop();
+/* ===== 签到 ===== */
+function isCheckedIn(ds){return !!DB.get('checkin_records',{})[ds];}
+function calcCheckinStreak(){
+  const rec=DB.get('checkin_records',{});let streak=0;const d=new Date();
+  while(true){const ds=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;if(rec[ds]){streak++;d.setDate(d.getDate()-1)}else break;}
+  return streak;
 }
-function togglePlan(id){
-  const plans=DB.get('plan',[]);const p=plans.find(x=>x.id===id);if(p)p.done=!p.done;DB.set('plan',plans);
-  recordToday('plan',plans.filter(x=>x.done).length);renderPlan();renderTop();
+function doCheckin(){
+  if(isCheckedIn(today()))return;
+  const rec=DB.get('checkin_records',{});rec[today()]=true;DB.set('checkin_records',rec);
+  document.getElementById('checkinBtn').textContent='今日已签到 ✓';
+  document.getElementById('checkinBtn').disabled=true;
+  document.getElementById('checkinBtn').style.opacity='0.6';
+  document.getElementById('checkinTitle').textContent='今日已签到，真棒！';
+  document.getElementById('checkinEmoji').textContent='🌸';
+  document.getElementById('checkinSub').textContent='继续保持，明天也要加油哦';
+  document.getElementById('planStreak').textContent=`🔥 连续 ${calcCheckinStreak()} 天`;
+  renderCheckinCal();renderCal();renderTop();toast('签到成功 🎉');
 }
-function delPlan(id){DB.set('plan',DB.get('plan',[]).filter(x=>x.id!==id));renderPlan();renderTop()}
-function resetPlan(){if(!confirm('确定重置当日所有任务？'))return;DB.set('plan',[]);renderPlan();renderTop();toast('已重置')}
-function renderPlan(){
-  const plans=DB.get('plan',[]);const done=plans.filter(p=>p.done).length;const total=plans.length;const pct=total?Math.round(done/total*100):0;
-  document.getElementById('planStat').textContent=`${done}/${total}`;
-  document.getElementById('planStreak').textContent=`🔥 连续 ${calcStreak('plan')} 天`;
-  document.getElementById('planTopBar').style.width=pct+'%';
-  document.getElementById('planTopPct').textContent=pct+'%';
-  const list=document.getElementById('planList');
-  list.innerHTML=plans.length?plans.map(p=>`
-    <div class="task-item ${p.done?'done':''}">
-      <div class="checkbox ${p.done?'checked':''}" onclick="togglePlan(${p.id})"></div>
-      <div class="task-text">${esc(p.text)}</div>
-      <span class="task-del" onclick="delPlan(${p.id})">×</span>
-    </div>`).join(''):'<div class="empty-hint">暂无任务，添加今日待办</div>';
+function renderCheckin(){
+  document.getElementById('planStreak').textContent=`🔥 连续 ${calcCheckinStreak()} 天`;
+  const checked=isCheckedIn(today());
+  const btn=document.getElementById('checkinBtn');
+  if(checked){
+    btn.textContent='今日已签到 ✓';btn.disabled=true;btn.style.opacity='0.6';
+    document.getElementById('checkinTitle').textContent='今日已签到，真棒！';
+    document.getElementById('checkinEmoji').textContent='🌸';
+    document.getElementById('checkinSub').textContent='继续保持，明天也要加油哦';
+  }else{
+    btn.textContent='今日签到';btn.disabled=false;btn.style.opacity='1';
+    document.getElementById('checkinTitle').textContent='今日尚未签到';
+    document.getElementById('checkinEmoji').textContent='🌱';
+    document.getElementById('checkinSub').textContent='点击按钮，种下今天的小进步';
+  }
+  renderCheckinCal();
 }
-document.getElementById('planInput').addEventListener('keydown',e=>{if(e.key==='Enter')addPlan()});
+function renderCheckinCal(){
+  const d=new Date();
+  document.getElementById('checkinWeekHead').innerHTML=['日','一','二','三','四','五','六'].map(w=>`<div class="cal-head">${w}</div>`).join('');
+  const first=new Date(d.getFullYear(),d.getMonth(),1).getDay();const days=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();
+  let html='';for(let i=0;i<first;i++)html+='<div class="cal-day empty"></div>';
+  const rec=DB.get('checkin_records',{});
+  for(let day=1;day<=days;day++){
+    const ds=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const checked=rec[ds];const isToday=ds===today();
+    html+=`<div class="cal-day ${checked?'full':''} ${isToday?'today':''}"><div class="d-num">${day}</div><div class="d-dot"></div></div>`;
+  }
+  document.getElementById('checkinGrid').innerHTML=html;
+}
 
 /* ===== 学习 ===== */
 function addWordItem(){
@@ -949,7 +1031,29 @@ function renderWords(){
   document.getElementById('wordStreak').textContent=`🔥 连续 ${calcStreak('word')} 天`;
   document.getElementById('wordTopBar').style.width=pct+'%';
   document.getElementById('wordTopPct').textContent=pct+'%';
-  document.getElementById('wordList').innerHTML=words.length?words.map(w=>resItem(w.id,w.title,w.url,'','','word',isDoneToday('word',w.id))).join(''):'<div class="empty-hint">暂无学习任务</div>';
+  document.getElementById('wordList').innerHTML=words.length?words.map(w=>wordItem(w)).join(''):'<div class="empty-hint">暂无学习任务</div>';
+}
+function wordItem(w){
+  const done=isDoneToday('word',w.id);
+  const timeLog=DB.get('word_time_log',{});
+  const timeMin=timeLog[`${w.id}_${today()}`]||0;
+  const isTiming=timers.en.running&&activeTimerTarget&&activeTimerTarget.id===w.id;
+  return `<div class="res-item ${done?'done':''}">
+    <div class="res-cover"><span style="font-size:11px;font-weight:600;color:var(--pink-d)">学习</span></div>
+    <div class="res-info">
+      <div class="res-title">${esc(w.title)}</div>
+      <div class="res-meta">
+        ${w.tag?`<span class="tag b">${esc(w.tag)}</span>`:''}
+        ${timeMin?`<span>⏱ 今日 ${timeMin} 分钟</span>`:''}
+      </div>
+    </div>
+    <div class="res-actions">
+      ${w.url?`<button class="btn btn-pink btn-sm" onclick="openApp('${esc(w.url)}','word',${w.id})">▶ 学习</button>`:''}
+      <button class="btn ${isTiming?'btn-pink':'btn-ghost'} btn-sm" onclick="startWordTimer(${w.id})">${isTiming?'结束计时':'⏱ 计时'}</button>
+      <div class="btn-check ${done?'checked':''}" onclick="toggleWord(${w.id})"></div>
+      <span class="task-del" onclick="delWord(${w.id})">×</span>
+    </div>
+  </div>`;
 }
 
 /* ===== 运动 ===== */
@@ -1165,25 +1269,41 @@ function renderCal(){
   }
   document.getElementById('calGrid').innerHTML=html;
   document.getElementById('calMonthLabel').textContent=`${y}年${m+1}月 · 累计完成 ${monthDone} 天`;
+  monthStats();
 }
 function dayStats(ds){
-  const done=(DB.get('plan_records',{})[ds]||0)+(DB.get('word_records',{})[ds]||0)+(DB.get('train_records',{})[ds]||0)+(DB.get('book_records',{})[ds]||0)+(DB.get('pod_records',{})[ds]||0);
+  const done=(isCheckedIn(ds)?1:0)+(DB.get('word_records',{})[ds]||0)+(DB.get('train_records',{})[ds]||0)+(DB.get('book_records',{})[ds]||0)+(DB.get('pod_records',{})[ds]||0);
   return {done,total:done>0?Math.max(done,1):0};
+}
+function monthStats(){
+  const y=calDate.getFullYear(),m=calDate.getMonth();
+  const prefix=`${y}-${String(m+1).padStart(2,'0')}-`;
+  let studyMin=0,trainDays=0,readMin=0,podDays=0;
+  const enLog=DB.get('timer_en_log',{}),readLog=DB.get('timer_read_log',{});
+  const trainRec=DB.get('train_records',{}),podRec=DB.get('pod_records',{});
+  Object.keys(enLog).forEach(k=>{if(k.startsWith(prefix))studyMin+=enLog[k]||0});
+  Object.keys(readLog).forEach(k=>{if(k.startsWith(prefix))readMin+=readLog[k]||0});
+  Object.keys(trainRec).forEach(k=>{if(k.startsWith(prefix)&&(trainRec[k]||0)>0)trainDays++});
+  Object.keys(podRec).forEach(k=>{if(k.startsWith(prefix)&&(podRec[k]||0)>0)podDays++});
+  document.getElementById('monthStudyMin').textContent=studyMin;
+  document.getElementById('monthTrainDays').textContent=trainDays;
+  document.getElementById('monthReadMin').textContent=readMin;
+  document.getElementById('monthPodDays').textContent=podDays;
 }
 function selectDay(ds){
   calSelected=ds;renderCal();
   document.getElementById('calDetailDate').textContent=ds;
-  const p=DB.get('plan_records',{})[ds]||0,w=DB.get('word_records',{})[ds]||0,t=DB.get('train_records',{})[ds]||0,b=DB.get('book_records',{})[ds]||0,pd=DB.get('pod_records',{})[ds]||0;
+  const checked=isCheckedIn(ds)?1:0,w=DB.get('word_records',{})[ds]||0,t=DB.get('train_records',{})[ds]||0,b=DB.get('book_records',{})[ds]||0,pd=DB.get('pod_records',{})[ds]||0;
   const enMin=DB.get('timer_en_log',{})[ds]||0,readMin=DB.get('timer_read_log',{})[ds]||0;
   const diary=DB.get('diaries',{})[ds];
   document.getElementById('calDetail').innerHTML=`
     <div class="day-detail-row"><span class="lbl">📅 日期</span><span class="val">${ds}</span></div>
-    <div class="day-detail-row"><span class="lbl">📋 每日计划</span><span class="val">${p} 项</span></div>
+    <div class="day-detail-row"><span class="lbl">✨ 签到</span><span class="val">${checked?'已签到':'未签到'}</span></div>
     <div class="day-detail-row"><span class="lbl">📝 学习</span><span class="val">${w} 项 · ${enMin} 分钟</span></div>
     <div class="day-detail-row"><span class="lbl">🏃 运动训练</span><span class="val">${t} 项</span></div>
     <div class="day-detail-row"><span class="lbl">📖 阅读</span><span class="val">${b} 项 · ${readMin} 分钟</span></div>
     <div class="day-detail-row"><span class="lbl">🎧 播客</span><span class="val">${pd} 项</span></div>
-    <div class="day-detail-row"><span class="lbl">✅ 当日总打卡</span><span class="val">${p+w+t+b+pd} 项</span></div>
+    <div class="day-detail-row"><span class="lbl">✅ 当日总打卡</span><span class="val">${checked+w+t+b+pd} 项</span></div>
     <div class="mt-16"><div class="muted" style="margin-bottom:8px">📔 当日日记</div>${diary?`<div style="background:var(--card);border-radius:8px;padding:12px;font-size:13px;line-height:1.7;white-space:pre-wrap">${esc(diary.mood||'')} ${esc(diary.text||'(无内容)')}</div>`:'<div class="empty-hint">当天无日记</div>'}</div>`;
 }
 function changeMonth(d){calDate.setMonth(calDate.getMonth()+d);renderCal()}
@@ -1194,34 +1314,62 @@ function closeModal(){document.getElementById('modal').classList.remove('show')}
 /* init */
 /* ===== 计时器 ===== */
 const timers={en:{sec:0,running:false,interval:null},read:{sec:0,running:false,interval:null}};
+let activeTimerTarget=null;
 function timerFmt(s){const h=Math.floor(s/3600);const m=Math.floor(s%3600/60);const ss=s%60;return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`}
 function timerTotalToday(key){
   const rec=DB.get('timer_'+key+'_log',{});
   return rec[today()]||0;
 }
-function timerToggle(key){
+function timerToggle(key,targetId=null){
   const t=timers[key];
   if(t.running){
     clearInterval(t.interval);t.running=false;
-    // 保存时长
-    const logKey='timer_'+key+'_log';const rec=DB.get(logKey,{});rec[today()]=(rec[today()]||0)+t.sec;DB.set(logKey,rec);
+    // 保存时长（秒转分钟）
+    const min=Math.max(1,Math.round(t.sec/60));
+    const logKey='timer_'+key+'_log';const rec=DB.get(logKey,{});rec[today()]=(rec[today()]||0)+min;DB.set(logKey,rec);
+    // 如果关联了学习任务，把时长记到该任务
+    if(key==='en'&&activeTimerTarget&&activeTimerTarget.id){
+      const wl=DB.get('word_time_log',{});
+      const k=`${activeTimerTarget.id}_${today()}`;
+      wl[k]=(wl[k]||0)+min;DB.set('word_time_log',wl);
+    }
+    activeTimerTarget=null;
     t.sec=0;
     document.getElementById(key+'TimerDisplay').textContent='00:00:00';
     document.getElementById(key+'TimerBtn').textContent='开始';
     document.getElementById(key+'TimerTotal').textContent='今日 '+timerTotalToday(key)+' 分钟';
+    if(key==='en')document.getElementById('enTimerTarget').textContent='未选择任务';
     toast('已记录'+(key==='en'?'学习':'阅读')+'时长');
+    if(key==='en')renderWords();
   }else{
     t.running=true;
-    document.getElementById(key+'TimerBtn').textContent='暂停';
+    if(key==='en'&&targetId){
+      activeTimerTarget={key,id:targetId};
+      const w=DB.get('words',[]).find(x=>x.id===targetId);
+      document.getElementById('enTimerTarget').textContent='正在为：'+(w?w.title:'');
+    }else{
+      activeTimerTarget={key,id:null};
+      if(key==='en')document.getElementById('enTimerTarget').textContent='未选择任务';
+    }
+    document.getElementById(key+'TimerBtn').textContent='结束';
     t.interval=setInterval(()=>{
       t.sec++;
       document.getElementById(key+'TimerDisplay').textContent=timerFmt(t.sec);
     },1000);
   }
 }
+function startWordTimer(id){
+  const t=timers['en'];
+  if(t.running){
+    if(activeTimerTarget&&activeTimerTarget.id===id){timerToggle('en');}
+    else{toast('请先结束当前计时');}
+  }else{
+    timerToggle('en',id);
+  }
+}
 function timerReset(key){
   const t=timers[key];
-  if(t.running){clearInterval(t.interval);t.running=false;document.getElementById(key+'TimerBtn').textContent='开始';}
+  if(t.running){clearInterval(t.interval);t.running=false;activeTimerTarget=null;document.getElementById(key+'TimerBtn').textContent='开始';if(key==='en')document.getElementById('enTimerTarget').textContent='未选择任务';}
   t.sec=0;
   document.getElementById(key+'TimerDisplay').textContent='00:00:00';
 }
@@ -1232,9 +1380,10 @@ function renderTimers(){
 
 function init(){
   if(!DB.get('inited_v3',false)){
-    DB.set('plan',[]);
+    DB.set('checkin_records',{});
     DB.set('words',[
-      {id:101,title:'不背单词 · 每日复习',url:'https://apps.apple.com/cn/app/id698570469',tag:'',done:false}
+      {id:101,title:'不背单词 · 每日复习',url:'https://apps.apple.com/cn/app/id698570469',tag:'',done:false},
+      {id:102,title:'银行笔试刷题 · 粉笔',url:'https://www.fenbi.com/',tag:'银行',done:false}
     ]);
     DB.set('trains',[
       {id:201,name:'帕梅拉 - 10分钟站立瘦腹 + 纤腿',cat:'腿部',dur:'10',url:'https://v.douyin.com/E4FLIejj3Pc/'},
@@ -1249,7 +1398,7 @@ function init(){
     ]);
     DB.set('inited_v3',true);
   }
-  renderTop();renderPlan();renderWords();renderTrain();renderBook();renderPod();renderDiary();renderCal();renderTimers();selectDay(today());
+  renderTop();renderCheckin();renderWords();renderTrain();renderBook();renderPod();renderDiary();renderCal();renderTimers();selectDay(today());
 }
 init();
 </script>
