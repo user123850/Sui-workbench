@@ -1030,6 +1030,30 @@ function checkinMonthStats(){
   if(bar)bar.style.width=pct+'%';
   if(txt)txt.textContent=`${c} / ${days} 天`;
 }
+/* 每日一句 · 签到鼓励语（按日期稳定取一句，有哲理） */
+const CHECKIN_QUOTES=[
+  '流水不争先，争的是滔滔不绝。',
+  '日拱一卒，功不唐捐。',
+  '种一棵树最好的时间是十年前，其次是现在。',
+  '路虽迩，不行不至；事虽小，不为不成。',
+  '不积跬步，无以至千里；不积小流，无以成江海。',
+  '宝剑锋从磨砺出，梅花香自苦寒来。',
+  '长风破浪会有时，直挂云帆济沧海。',
+  '千淘万漉虽辛苦，吹尽狂沙始到金。',
+  '锲而不舍，金石可镂。',
+  '行远自迩，登高自卑。',
+  '星光不问赶路人，时光不负有心人。',
+  '你只管努力，剩下的交给时间。',
+  '所有的运气，都是努力埋下的伏笔。',
+  '自律者出众，懒散者出局。',
+  '每一天的微小坚持，都是未来惊喜的铺垫。',
+  '看似不起眼的日复一日，终会在某天让你看到坚持的意义。',
+  '心之所向，素履以往；生如逆旅，一苇以航。'
+];
+function checkinQuote(){
+  const ds=today();let h=0;for(let i=0;i<ds.length;i++)h=(h*31+ds.charCodeAt(i))>>>0;
+  return CHECKIN_QUOTES[h%CHECKIN_QUOTES.length];
+}
 function doCheckin(){
   if(isCheckedIn(today()))return;
   const rec=DB.get('checkin_records',{});rec[today()]=true;DB.set('checkin_records',rec);
@@ -1041,8 +1065,8 @@ function renderCheckin(){
   if(checked){
     btn.textContent='今日已签到 ✓';btn.disabled=true;btn.style.opacity='0.6';
     document.getElementById('checkinTitle').textContent='今日已签到，真棒！';
-    document.getElementById('checkinEmoji').textContent='🌸';
-    document.getElementById('checkinSub').textContent='继续保持，明天也要加油哦';
+    document.getElementById('checkinEmoji').textContent='🐻';
+    document.getElementById('checkinSub').textContent=checkinQuote();
   }else{
     btn.textContent='签到';btn.disabled=false;btn.style.opacity='1';
     document.getElementById('checkinTitle').textContent='今日签到';
@@ -1438,6 +1462,12 @@ function init(){
       {id:401,title:'Apple Podcasts · 今日播客',cover:'',dur:'45',url:'https://podcasts.apple.com/',date:today()}
     ]);
     DB.set('inited_v3',true);
+  }
+  // 非破坏式迁移：确保「银行笔试刷题 · 粉笔」任务存在（已初始化过的数据也能补上）
+  const _words=DB.get('words',[]);
+  if(!_words.some(w=>(w.title||'').includes('银行笔试')||w.tag==='银行')){
+    _words.push({id:19002,title:'银行笔试刷题 · 粉笔',url:'https://www.fenbi.com/',tag:'银行',done:false});
+    DB.set('words',_words);
   }
   renderTop();renderCheckin();renderPlan();renderWords();renderTrain();renderBook();renderPod();renderDiary();renderCal();renderTimers();selectDay(today());
 }
