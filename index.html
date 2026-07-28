@@ -180,10 +180,11 @@ body{
   /* 手机日历适配 */
   .cal-grid{gap:3px}
   .cal-head{padding:4px 0;font-size:10px}
-  .cal-day{font-size:11px;border-width:1px;min-width:0;overflow:hidden;gap:1px}
-  .cal-day .d-dot{width:4px;height:4px}
+  .cal-day{aspect-ratio:auto;min-height:42px;padding:3px 1px;font-size:11px;border-width:1px;min-width:0;overflow:visible;gap:1px;justify-content:flex-start}
+  .cal-day .d-num{font-size:11px;line-height:1}
+  .cal-day .d-dot{width:4px;height:4px;margin-top:auto}
   .cal-day.full .d-dot,.cal-day.partial .d-dot{width:6px;height:6px}
-  .cal-day .d-pct{font-size:7px}
+  .cal-day .d-pct{font-size:7px;line-height:1}
 }
 
 /* header */
@@ -423,7 +424,10 @@ textarea.input{resize:vertical;min-height:90px;line-height:1.65}
   align-items:center;
   justify-content:center;
   flex-shrink:0;
+  align-self:center;
 }
+.res-actions .btn-sm{height:28px;padding:0 12px}
+.res-act-placeholder{display:inline-block;width:1px;height:28px}
 
 /* podcast card */
 .pod-item{
@@ -1295,7 +1299,7 @@ function resItem(id,title,url,tag,extra,prefix,done){
       </div>
     </div>
     <div class="res-actions">
-      ${url?`<button class="btn btn-pink btn-sm" onclick="openApp('${esc(url)}','${prefix}',${id})">▶ ${prefix==='train'?'跟练':prefix==='book'?'阅读':prefix==='word'?'学习':'收听'}</button>`:''}
+      ${url?`<button class="btn btn-pink btn-sm" onclick="openApp('${esc(url)}','${prefix}',${id})">▶ ${prefix==='train'?'跟练':prefix==='book'?'阅读':prefix==='word'?'学习':'收听'}</button>`:`<span class="res-act-placeholder"></span>`}
       <div class="btn-check ${done?'checked':''}" onclick="toggle${prefix.charAt(0).toUpperCase()+prefix.slice(1)}(${id})"></div>
       <span class="task-del" onclick="del${prefix.charAt(0).toUpperCase()+prefix.slice(1)}(${id})">×</span>
     </div>
