@@ -632,7 +632,7 @@ textarea.input{resize:vertical;min-height:90px;line-height:1.65}
         </svg>
         <div class="progress-text" id="ringPct">0%</div>
       </div>
-      <div class="label">今日打卡完成度</div>
+      <div class="label">今日任务完成度</div>
     </div>
   </aside>
 
@@ -974,12 +974,13 @@ function recordToday(prefix,count){
 
 /* overall */
 function calcOverall(){
-  const checkin=isCheckedIn(today())?1:0;
   const wordDone=DB.get('words',[]).filter(w=>isDoneToday('word',w.id)).length,wordTotal=DB.get('words',[]).length;
   const trainDone=DB.get('trains',[]).filter(t=>isDoneToday('train',t.id)).length,trainTotal=DB.get('trains',[]).length;
   const bookDone=DB.get('books',[]).filter(b=>isDoneToday('book',b.id)).length,bookTotal=DB.get('books',[]).length;
   const podDone=DB.get('pods',[]).filter(p=>isDoneToday('pod',p.id)).length,podTotal=DB.get('pods',[]).length;
-  return {done:checkin+wordDone+trainDone+bookDone+podDone,total:1+wordTotal+trainTotal+bookTotal+podTotal};
+  const plans=DB.get('plan',[]);
+  const planDone=plans.filter(p=>isDoneToday('plan',p.id)).length,planTotal=plans.length;
+  return {done:wordDone+trainDone+bookDone+podDone+planDone,total:wordTotal+trainTotal+bookTotal+podTotal+planTotal};
 }
 function renderTop(){
   const d=new Date();
