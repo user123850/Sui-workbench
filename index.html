@@ -758,6 +758,22 @@ textarea.input{resize:vertical;min-height:90px;line-height:1.65}
       </div>
     </div>
 
+    <!-- 签到小窗口（全局置顶） -->
+    <div class="card checkin-mini">
+      <div class="checkin-mini-row">
+        <div class="checkin-emoji" id="checkinEmoji">🌱</div>
+        <div class="checkin-mini-info">
+          <div class="checkin-mini-title" id="checkinTitle">今日签到</div>
+          <div class="checkin-mini-sub" id="checkinSub">点一下，记录今天来过 ✨</div>
+        </div>
+        <button class="btn btn-pink btn-sm" id="checkinBtn" onclick="doCheckin()">签到</button>
+      </div>
+      <div class="progress-wrap mt-12">
+        <div class="pbar"><div class="fill" id="checkinMonthBar" style="width:0%"></div></div>
+        <div class="txt"><span>本月签到</span><span id="checkinMonthTxt">0 / 0 天</span></div>
+      </div>
+    </div>
+
     <!-- 每日计划 -->
     <section class="view active" id="view-plan">
       <div class="page-header">
@@ -769,22 +785,6 @@ textarea.input{resize:vertical;min-height:90px;line-height:1.65}
             <div class="pbar"><div class="fill" id="planTopBar" style="width:0%"></div></div>
             <div class="txt"><span>今日进度</span><span id="planTopPct">0%</span></div>
           </div>
-        </div>
-      </div>
-
-      <!-- 签到小窗口 -->
-      <div class="card checkin-mini">
-        <div class="checkin-mini-row">
-          <div class="checkin-emoji" id="checkinEmoji">🌱</div>
-          <div class="checkin-mini-info">
-            <div class="checkin-mini-title" id="checkinTitle">今日签到</div>
-            <div class="checkin-mini-sub" id="checkinSub">点一下，记录今天来过 ✨</div>
-          </div>
-          <button class="btn btn-pink btn-sm" id="checkinBtn" onclick="doCheckin()">签到</button>
-        </div>
-        <div class="progress-wrap mt-12">
-          <div class="pbar"><div class="fill" id="checkinMonthBar" style="width:0%"></div></div>
-          <div class="txt"><span>本月签到</span><span id="checkinMonthTxt">0 / 0 天</span></div>
         </div>
       </div>
 
