@@ -589,16 +589,36 @@ textarea.input{resize:vertical;min-height:90px;line-height:1.65}
 .pod-bar-track{flex:1;height:18px;background:var(--card-2);border-radius:10px;overflow:hidden}
 .pod-bar-fill{height:100%;border-radius:10px;transition:width .4s}
 .pod-bar-val{width:50px;text-align:right;flex-shrink:0}
+.pod-add-card{margin-bottom:16px}
+.pod-hint{font-size:11px;color:var(--text-3);margin-top:8px;line-height:1.5}
+.pod-card-top{display:flex;gap:12px;align-items:center;margin-bottom:10px}
+.pod-cover{width:64px;height:64px;border-radius:12px;flex-shrink:0;background-size:cover;background-position:center;background-color:var(--card-2);display:flex;align-items:center;justify-content:center;font-size:28px;color:var(--text-2);overflow:hidden}
+.pod-head-info{flex:1;min-width:0}
+.pod-name{font-size:15px;font-weight:700;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pod-status{display:inline-block;font-size:11px;font-weight:600;padding:2px 9px;border-radius:10px;margin-bottom:6px}
+.pod-time{font-size:12px;color:var(--text-3)}
+.pod-desc{font-size:12px;color:var(--text-2);line-height:1.5;margin-bottom:10px;max-height:48px;overflow:hidden}
+.pod-progress{height:6px;background:var(--card-2);border-radius:6px;overflow:hidden;margin-bottom:10px}
+.pod-progress-bar{height:100%;border-radius:6px;transition:width .4s}
+.pod-eps{background:var(--card-2);border-radius:var(--radius-xs);padding:10px;margin-bottom:10px}
+.pod-eps-title{font-size:11px;color:var(--text-3);margin-bottom:6px}
+.pod-ep{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px dashed var(--line)}
+.pod-ep:last-child{border:none}
+.pod-ep.listened .pod-ep-title{color:var(--text-3);text-decoration:line-through}
+.pod-ep-info{flex:1;min-width:0}
+.pod-ep-title{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pod-ep-dur{font-size:11px;color:var(--text-3)}
 @media(max-width:768px){
   .pod-grid{grid-template-columns:1fr}
   .pod-bar-label{width:70px}
+  .pod-cover{width:54px;height:54px;font-size:24px}
 }
 
 /* period */
-.period-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
-.period-stat{background:var(--card-2);border-radius:var(--radius-xs);padding:14px;text-align:center}
-.period-stat-num{font-size:22px;font-weight:700;color:var(--text)}
-.period-stat-label{font-size:11px;color:var(--text-3);margin-top:2px}
+.period-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.period-stat{background:var(--card-2);border-radius:var(--radius-xs);padding:8px 6px;text-align:center}
+.period-stat-num{font-size:16px;font-weight:700;color:var(--text)}
+.period-stat-label{font-size:10px;color:var(--text-3);margin-top:2px}
 .period-history{max-height:280px;overflow-y:auto}
 .period-history-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px dashed var(--line);font-size:13px}
 .period-history-item:last-child{border:none}
@@ -609,7 +629,7 @@ textarea.input{resize:vertical;min-height:90px;line-height:1.65}
 #periodGrid .cal-day{cursor:pointer}
 #periodGrid .cal-day:hover{filter:brightness(.96)}
 @media(max-width:768px){
-  .period-stats{grid-template-columns:1fr}
+  .period-stats{grid-template-columns:repeat(2,1fr)}
 }
 
 .day-detail-box{
@@ -806,20 +826,20 @@ textarea.input{resize:vertical;min-height:90px;line-height:1.65}
         </div>
       </div>
       <div class="card">
-        <div class="card-title">🏦 银行笔试刷题 · 粉笔</div>
-        <div class="bank-wrap">
-          <div class="bank-chart" id="bankDonut"></div>
-          <div class="bank-legend" id="bankLegend"></div>
-        </div>
-        <div class="bank-cats" id="bankCats"></div>
-      </div>
-      <div class="card">
         <div class="card-title">我的学习任务<span class="sub" id="wordStat">0/0</span></div>
         <div class="res-list" id="wordList"></div>
         <div class="mt-16 flex" style="gap:8px">
           <input class="input" id="wordInput" placeholder="添加其他学习链接或任务..." style="flex:1">
           <button class="btn btn-pink btn-sm" onclick="addWordItem()">添加</button>
         </div>
+      </div>
+      <div class="card">
+        <div class="card-title">🏦 银行笔试刷题 · 粉笔</div>
+        <div class="bank-wrap">
+          <div class="bank-chart" id="bankDonut"></div>
+          <div class="bank-legend" id="bankLegend"></div>
+        </div>
+        <div class="bank-cats" id="bankCats"></div>
       </div>
     </section>
 
@@ -888,15 +908,23 @@ textarea.input{resize:vertical;min-height:90px;line-height:1.65}
     <section class="view" id="view-podcast">
       <div class="page-header">
         <h2>播客</h2>
-        <div class="desc">收听喜爱的播客节目，记录时长与随笔</div>
+        <div class="desc">粘贴 Apple 播客链接自动导入，记录收听与随笔</div>
         <div class="row">
-          <span class="badge" id="podStreak">🔥 连续 0 天</span>
           <span class="badge">🎧 累计收听 <b id="podTotalMin">0</b> 分钟</span>
+          <span class="badge" id="podShowsCount">📻 0 档节目</span>
         </div>
       </div>
       <div class="card">
-        <div class="card-title">📊 收听时长排行</div>
+        <div class="card-title">📊 各节目收听时长</div>
         <div class="pod-bar-chart" id="podBarChart"></div>
+      </div>
+      <div class="card pod-add-card">
+        <div class="flex" style="gap:8px;flex-wrap:wrap">
+          <input class="input" id="podAddUrl" placeholder="粘贴 Apple 播客链接，自动抓取封面/简介/单集…" style="flex:1;min-width:200px">
+          <button class="btn btn-pink btn-sm" onclick="addPodcastByUrl()">＋ 导入播客</button>
+          <button class="btn btn-line btn-sm" onclick="openPodManualModal()">手动添加</button>
+        </div>
+        <div class="pod-hint">提示：链接形如 podcasts.apple.com/.../id123456789，将自动拉取最近单集，可一键标记收听并导入时长</div>
       </div>
       <div class="pod-grid" id="podList"></div>
     </section>
@@ -1455,60 +1483,165 @@ const POD_SHOWS=[
   {id:'gaoqian',name:'搞钱女孩',icon:'💰',color:'#b8d4a8'}
 ];
 function applePodUrl(name){return 'https://podcasts.apple.com/cn/search?term='+encodeURIComponent(name);}
-function getPodRecords(){return DB.get('pod_show_records',{});}
-function getPodRec(id){const r=getPodRecords();if(!r[id])r[id]={minutes:0,essays:[]};return r[id];}
+function newShow(name,color){return {id:'pod'+Date.now()+Math.floor(Math.random()*999),name,color:color||'#c9b6d8',icon:'🎧',url:'',cover:'',desc:'',status:'todo',episodes:[],listenedCount:0,manualListens:0,totalMin:0,manualMin:0,essays:[]};}
+function initPodShows(){
+  if(DB.get('podShows',null)!==null)return;
+  const old=DB.get('pod_show_records',{});
+  const shows=POD_SHOWS.map(s=>{
+    const o=old[s.id]||{minutes:0,essays:[]};
+    const sh=newShow(s.name,s.color);sh.id=s.id;
+    sh.url=applePodUrl(s.name);sh.icon=s.icon;
+    sh.totalMin=o.minutes||0;sh.manualMin=o.minutes||0;sh.essays=o.essays||[];
+    sh.status=sh.totalMin>0?'listening':'todo';
+    return sh;
+  });
+  DB.set('podShows',shows);
+}
+function getShows(){return DB.get('podShows',[]);}
+function saveShows(s){DB.set('podShows',s);}
+function showStatus(s){
+  const eps=s.episodes||[];
+  if(eps.length){if(s.listenedCount>=eps.length)return 'done';return s.listenedCount>0?'listening':'todo';}
+  return (s.totalMin||0)>0?'listening':'todo';
+}
+function showListened(s){return (s.episodes||[]).filter(e=>e.listened).length+(s.manualListens||0);}
+function showTotalMin(s){return (s.episodes||[]).reduce((a,e)=>a+(e.listened?e.durMin:0),0)+(s.manualMin||0);}
+function showProgress(s){const eps=s.episodes||[];if(!eps.length)return 0;return Math.round(showListened(s)/eps.length*100);}
+function recompute(s){s.listenedCount=(s.episodes||[]).filter(e=>e.listened).length;s.totalMin=showTotalMin(s);s.status=showStatus(s);}
 function addPodMinutes(id,min){
   min=parseInt(min,10);if(isNaN(min)||min<=0)return toast('请输入正整数分钟');
-  const r=getPodRecords();if(!r[id])r[id]={minutes:0,essays:[]};r[id].minutes+=min;DB.set('pod_show_records',r);renderPod();toast('已记录 '+min+' 分钟');
+  const shows=getShows();const s=shows.find(x=>x.id===id);if(!s)return;
+  s.manualMin=(s.manualMin||0)+min;recompute(s);saveShows(shows);renderPod();toast('已记录 '+min+' 分钟');
 }
 function addPodEssay(id,text){
-  if(!text.trim())return toast('随笔不能为空');
-  const r=getPodRecords();if(!r[id])r[id]={minutes:0,essays:[]};r[id].essays.push({id:Date.now(),text:text.trim(),date:today()});DB.set('pod_show_records',r);renderPod();toast('随笔已保存');
+  if(!text||!text.trim())return toast('随笔不能为空');
+  const shows=getShows();const s=shows.find(x=>x.id===id);if(!s)return;
+  s.essays.push({id:Date.now(),text:text.trim(),date:today()});saveShows(shows);renderPod();toast('随笔已保存');
 }
 function delPodEssay(id,eid){
-  const r=getPodRecords();if(!r[id])return;r[id].essays=r[id].essays.filter(x=>x.id!==eid);DB.set('pod_show_records',r);renderPod();
+  const shows=getShows();const s=shows.find(x=>x.id===id);if(!s)return;
+  s.essays=s.essays.filter(x=>x.id!==eid);saveShows(shows);renderPod();
+}
+function markEpisode(id,epId,listened){
+  const shows=getShows();const s=shows.find(x=>x.id===id);if(!s)return;
+  const e=(s.episodes||[]).find(x=>x.id===epId);if(!e)return;
+  e.listened=listened;recompute(s);saveShows(shows);renderPod();
+  toast(listened?('已标记收听：'+(e.title||'单集').slice(0,12)):'已取消');
+}
+function parseAppleId(url){const m=String(url||'').match(/id(\d+)/);return m?m[1]:null;}
+async function fetchApple(id){
+  const res=await fetch('https://itunes.apple.com/lookup?id='+id+'&entity=podcastEpisode&media=podcast');
+  if(!res.ok)throw new Error('网络请求失败');
+  const data=await res.json();
+  if(!data.results||!data.results.length)throw new Error('未找到该播客');
+  const pod=data.results[0];
+  const eps=data.results.slice(1).filter(r=>r.wrapperType==='podcastEpisode').map(r=>({
+    id:'ep'+r.trackId,title:r.trackName||'单集',durMin:Math.max(1,Math.round((r.trackTimeMillis||0)/60000)),listened:false
+  }));
+  return {
+    name:pod.collectionName||pod.trackName||'',
+    cover:(pod.artworkUrl600||'').replace('600x600','300x300'),
+    desc:(pod.description||'').replace(/<[^>]+>/g,'').slice(0,160),
+    url:pod.collectionViewUrl||pod.trackViewUrl||'',
+    episodes:eps
+  };
+}
+async function addPodcastByUrl(){
+  const url=(document.getElementById('podAddUrl').value||'').trim();
+  if(!url)return toast('请先粘贴 Apple 播客链接');
+  const aid=parseAppleId(url);if(!aid)return toast('链接中未找到播客 ID（应为 .../id123456789）');
+  toast('正在抓取播客信息…');
+  try{
+    const info=await fetchApple(aid);const shows=getShows();
+    let s=shows.find(x=>x.name&&info.name&&x.name===info.name);
+    if(!s){s=newShow(info.name||'未命名播客');shows.push(s);}
+    s.cover=info.cover;s.desc=info.desc;s.url=info.url||s.url;
+    if(info.episodes.length){s.episodes=info.episodes;s.listenedCount=0;}
+    s.status=showStatus(s);saveShows(shows);
+    document.getElementById('podAddUrl').value='';renderPod();
+    toast('已导入：'+info.name+(info.episodes.length?(' · '+info.episodes.length+' 集'):''));
+  }catch(e){toast('抓取失败：'+(e.message||'请检查网络或手动添加'));}
 }
 function renderPod(){
-  const recs=getPodRecords();
-  const totalMin=POD_SHOWS.reduce((s,p)=>s+(recs[p.id]?recs[p.id].minutes:0),0);
+  const shows=getShows();
+  const totalMin=shows.reduce((a,s)=>a+showTotalMin(s),0);
   document.getElementById('podTotalMin').textContent=totalMin;
-  document.getElementById('podStreak').textContent=`🔥 连续 ${calcStreak('pod')} 天`;
-  const maxMin=Math.max(1,...POD_SHOWS.map(p=>recs[p.id]?recs[p.id].minutes:0));
-  document.getElementById('podBarChart').innerHTML=POD_SHOWS.map(p=>{
-    const m=recs[p.id]?recs[p.id].minutes:0;
-    return `<div class="pod-bar-row"><span class="pod-bar-label">${esc(p.name)}</span><div class="pod-bar-track"><div class="pod-bar-fill" style="width:${(m/maxMin*100).toFixed(1)}%;background:${p.color}"></div></div><span class="pod-bar-val">${m}m</span></div>`;
+  const cnt=document.getElementById('podShowsCount');if(cnt)cnt.textContent='📻 '+shows.length+' 档节目';
+  const maxMin=Math.max(1,...shows.map(s=>showTotalMin(s)));
+  document.getElementById('podBarChart').innerHTML=shows.map(s=>{
+    const m=showTotalMin(s);
+    return `<div class="pod-bar-row"><span class="pod-bar-label">${esc(s.name)}</span><div class="pod-bar-track"><div class="pod-bar-fill" style="width:${(m/maxMin*100).toFixed(1)}%;background:${s.color}"></div></div><span class="pod-bar-val">${m}m</span></div>`;
   }).join('');
-  document.getElementById('podList').innerHTML=POD_SHOWS.map(p=>{
-    const r=recs[p.id]||{minutes:0,essays:[]};
-    const lastEssay=r.essays.length?r.essays[r.essays.length-1]:null;
+  const stMap={todo:['待收听','var(--text-3)','var(--card-2)'],listening:['收听中','#1a7f5a','#d6f0e4'],done:['已听完','#b8860b','#f7eccf']};
+  document.getElementById('podList').innerHTML=shows.map(s=>{
+    const st=s.status||showStatus(s);const prog=showProgress(s);const listened=showListened(s);
+    const sc=stMap[st]||stMap.todo;const lastEssay=s.essays.length?s.essays[s.essays.length-1]:null;
+    const eps=(s.episodes||[]);
+    const epHtml=eps.length?`<div class="pod-eps"><div class="pod-eps-title">单集（${listened}/${eps.length}）</div>${eps.map(e=>`
+      <div class="pod-ep ${e.listened?'listened':''}">
+        <div class="pod-ep-info"><div class="pod-ep-title">${esc(e.title||'单集')}</div><div class="pod-ep-dur">${e.durMin} 分钟</div></div>
+        <button class="btn btn-sm ${e.listened?'btn-ghost':'btn-line'}" onclick="markEpisode('${s.id}','${e.id}',${!e.listened})">${e.listened?'✓ 已听':'标记收听'}</button>
+      </div>`).join('')}</div>`:'';
     return `<div class="pod-card">
-      <div class="pod-card-header">
-        <div class="pod-icon" style="background:${p.color}20">${p.icon}</div>
-        <div class="pod-info">
-          <div class="pod-name">${esc(p.name)}</div>
-          <div class="pod-time">累计收听 ${r.minutes} 分钟</div>
+      <div class="pod-card-top">
+        <div class="pod-cover" style="${s.cover?('background-image:url(\''+s.cover+'\')'):('background:'+s.color+'33')}">${s.cover?'':(s.icon||'🎧')}</div>
+        <div class="pod-head-info">
+          <div class="pod-name">${esc(s.name)}</div>
+          <span class="pod-status" style="color:${sc[1]};background:${sc[2]}">${sc[0]}</span>
+          <div class="pod-time">累计收听 ${showTotalMin(s)} 分钟 · 已听 ${listened} 集</div>
         </div>
       </div>
+      ${s.desc?`<div class="pod-desc">${esc(s.desc)}</div>`:''}
+      <div class="pod-progress"><div class="pod-progress-bar" style="width:${prog}%;background:${s.color}"></div></div>
+      ${epHtml}
       <div class="pod-actions">
-        <a class="btn btn-pink btn-sm" href="${applePodUrl(p.name)}" target="_blank">▶ Apple 播客</a>
-        <input class="input" id="podMin_${p.id}" type="number" placeholder="分钟" style="width:60px;text-align:center;font-size:12px;padding:6px">
-        <button class="btn btn-line btn-sm" onclick="addPodMinutes('${p.id}',document.getElementById('podMin_${p.id}').value);document.getElementById('podMin_${p.id}').value=''">+ 时长</button>
-        <button class="btn btn-ghost btn-sm" onclick="openPodEssayModal('${p.id}')">写随笔</button>
+        <a class="btn btn-pink btn-sm" href="${esc(s.url||applePodUrl(s.name))}" target="_blank">↗ 原播客</a>
+        <button class="btn btn-line btn-sm" onclick="openPodFetchModal('${s.id}')">🔄 刷新单集</button>
+        <button class="btn btn-ghost btn-sm" onclick="openPodEssayModal('${s.id}')">✏ 随笔</button>
+        <input class="input" id="podMin_${s.id}" type="number" placeholder="分钟" style="width:56px;text-align:center;font-size:12px;padding:6px">
+        <button class="btn btn-line btn-sm" onclick="addPodMinutes('${s.id}',document.getElementById('podMin_${s.id}').value);document.getElementById('podMin_${s.id}').value=''">+ 时长</button>
       </div>
-      ${lastEssay?`<div class="pod-essay">${esc(lastEssay.text)}<div class="pod-essay-date">${lastEssay.date} <span style="cursor:pointer;float:right" onclick="delPodEssay('${p.id}',${lastEssay.id})">×</span></div></div>`:''}
+      ${lastEssay?`<div class="pod-essay">${esc(lastEssay.text)}<div class="pod-essay-date">${lastEssay.date} <span style="cursor:pointer;float:right" onclick="delPodEssay('${s.id}',${lastEssay.id})">×</span></div></div>`:''}
     </div>`;
   }).join('');
 }
-function openPodEssayModal(id){
-  const show=POD_SHOWS.find(x=>x.id===id);
-  openModal(show?('写随笔 · '+show.name):'写播客随笔',`
-    ${!show?`<select class="input" id="peShow" style="margin-bottom:10px">${POD_SHOWS.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('')}</select>`:''}
-    <textarea class="input" id="peText" rows="4" placeholder="听完这期的想法..."></textarea>
+function openPodFetchModal(id){
+  const s=getShows().find(x=>x.id===id);
+  openModal('刷新单集 · '+(s?s.name:''),`
+    <p style="margin:0 0 10px;font-size:12px;color:var(--text-2)">粘贴该播客的 Apple 播客链接（含 /id数字），自动拉取最新单集清单。</p>
+    <input class="input" id="podFetchUrl" placeholder="https://podcasts.apple.com/.../id123456789" value="${s&&s.url?esc(s.url):''}" style="width:100%">
   `,()=>{
-    const sid=show?show.id:document.getElementById('peShow').value;
-    const text=document.getElementById('peText').value;
-    addPodEssay(sid,text);
+    const url=(document.getElementById('podFetchUrl').value||'').trim();
+    const aid=parseAppleId(url);
+    if(!aid){toast('链接中未找到播客 ID');return false;}
+    fetchApple(aid).then(info=>{
+      const shows=getShows();const sh=shows.find(x=>x.id===id);
+      if(sh){sh.cover=info.cover||sh.cover;sh.desc=info.desc||sh.desc;sh.url=info.url||sh.url;
+        if(info.episodes.length){sh.episodes=info.episodes;sh.listenedCount=0;}
+        sh.status=showStatus(sh);saveShows(shows);renderPod();toast('已刷新单集');}
+      closeModal();
+    }).catch(e=>{toast('抓取失败：'+(e.message||'请手动添加'));closeModal();});
+    return false;
   });
+}
+function openPodManualModal(){
+  openModal('手动添加播客',`
+    <input class="input" id="pmName" placeholder="播客名称" style="width:100%;margin-bottom:8px">
+    <input class="input" id="pmUrl" placeholder="原播客链接（可选）" style="width:100%;margin-bottom:8px">
+    <input class="input" id="pmCover" placeholder="封面图链接（可选）" style="width:100%">
+  `,()=>{
+    const name=(document.getElementById('pmName').value||'').trim();if(!name)return toast('请填写名称'),false;
+    const shows=getShows();const s=newShow(name);
+    s.url=(document.getElementById('pmUrl').value||'').trim();s.cover=(document.getElementById('pmCover').value||'').trim();
+    shows.push(s);saveShows(shows);renderPod();toast('已添加：'+name);
+  });
+}
+function openPodEssayModal(id){
+  const s=getShows().find(x=>x.id===id);
+  openModal(s?('写随笔 · '+s.name):'写播客随笔',`
+    ${!s?`<select class="input" id="peShow" style="margin-bottom:10px">${getShows().map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('')}</select>`:''}
+    <textarea class="input" id="peText" rows="4" placeholder="听完这期的想法..."></textarea>
+  `,()=>{const sid=s?s.id:document.getElementById('peShow').value;addPodEssay(sid,document.getElementById('peText').value);});
 }
 
 /* resource item template */
@@ -1824,7 +1957,7 @@ function init(){
     DB.set('words',_words);
   }
   migrateBooks();
-  renderTop();renderCheckin();renderPlan();renderWords();renderBank();renderTrain();renderBook();renderPod();renderDiary();renderPeriod();renderCal();renderTimers();selectDay(today());
+  renderTop();renderCheckin();renderPlan();renderWords();renderBank();renderTrain();renderBook();initPodShows();renderPod();renderDiary();renderPeriod();renderCal();renderTimers();selectDay(today());
 }
 init();
 </script>
