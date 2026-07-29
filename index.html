@@ -606,6 +606,8 @@ textarea.input{resize:vertical;min-height:90px;line-height:1.65}
 .period-day .d-num{color:var(--pink-d)}
 .predict-day{background:var(--purple-l);border:2px dashed var(--purple);opacity:.8}
 .ovu-day{background:var(--green-l);border-color:var(--green)}
+#periodGrid .cal-day{cursor:pointer}
+#periodGrid .cal-day:hover{filter:brightness(.96)}
 @media(max-width:768px){
   .period-stats{grid-template-columns:1fr}
 }
@@ -1568,19 +1570,34 @@ function viewDiary(date){switchView('diary');const d=DB.get('diaries',{})[date]|
 /* ===== 经期记录 ===== */
 let periodDate=new Date();
 function getPeriods(){return DB.get('periods',[]);}
-function isPeriodDay(ds){return getPeriods().some(p=>ds>=p.startDate&&ds<=(p.endDate||p.startDate));}
+function isPeriodDay(ds){return getPeriods().some(p=>ds>=p.startDate&&(p.endDate?ds<=p.endDate:ds<=today()));}
 function isPredictDay(ds){const pred=predictNextPeriod();return pred&&ds===pred;}
 function inPeriodRange(ds){const open=getPeriods().find(p=>!p.endDate);return open&&ds>=open.startDate&&ds<=today();}
-function startPeriod(){
+function startPeriod(ds){
+  ds=ds||today();
   const periods=getPeriods();
   if(periods.some(p=>!p.endDate))return toast('当前已有进行中的经期，请先结束');
-  periods.push({id:Date.now(),startDate:today(),endDate:''});
-  DB.set('periods',periods.sort((a,b)=>b.startDate.localeCompare(a.startDate)));renderPeriod();toast('已记录月经开始');
+  if(periods.some(p=>ds>=p.startDate&&(p.endDate?ds<=p.endDate:ds<=today())))return toast('该日期已在某次经期范围内');
+  periods.push({id:Date.now(),startDate:ds,endDate:''});
+  DB.set('periods',periods.sort((a,b)=>b.startDate.localeCompare(a.startDate)));renderPeriod();toast('已记录月经开始：'+ds);
 }
-function endPeriod(){
-  const periods=getPeriods();const open=periods.find(p=>!p.endDate);if(!open)return toast('没有进行中的经期');
-  if(today()<open.startDate)return toast('结束日期不能早于开始日期');
-  open.endDate=today();DB.set('periods',periods);renderPeriod();toast('已记录月经结束');
+function endPeriod(ds){
+  ds=ds||today();
+  const periods=getPeriods();const open=periods.find(p=>!p.endDate);if(!open)return toast('没有进行中的经期，请先点「记录月经开始」');
+  if(ds<open.startDate)return toast('结束日期不能早于开始日期（'+open.startDate+'）');
+  if(periods.some(p=>p.endDate&&ds>=p.startDate&&ds<=p.endDate))return toast('该日期已被其他经期覆盖');
+  open.endDate=ds;DB.set('periods',periods);renderPeriod();toast('已记录月经结束：'+ds);
+}
+function pickPeriodDay(ds){
+  const periods=getPeriods();const open=periods.find(p=>!p.endDate);
+  let body=`<p style="margin:0 0 12px;color:var(--text-2)">为日期 <b>${ds}</b> 选择操作：</p>`;
+  body+=`<div style="display:flex;gap:10px;flex-wrap:wrap">`;
+  body+=`<button class="btn btn-pink" onclick="startPeriod('${ds}');closeModal()">🩸 设为开始</button>`;
+  body+=`<button class="btn btn-line" onclick="endPeriod('${ds}');closeModal()">✓ 设为结束</button>`;
+  body+=`</div>`;
+  if(open)body+=`<p style="margin:10px 0 0;font-size:12px;color:var(--text-2)">当前进行中：${open.startDate}（点「设为结束」即结束本次）</p>`;
+  openModal('经期记录 · '+ds,body,()=>{});
+  document.getElementById('modalOk').textContent='取消';
 }
 function delPeriod(id){DB.set('periods',getPeriods().filter(p=>p.id!==id));renderPeriod();}
 function calcPeriodStats(){
@@ -1618,7 +1635,7 @@ function renderPeriod(){
     let cls='';const isPd=isPeriodDay(ds);const isPred=isPredictDay(ds);const isToday=ds===today();
     if(isPd)cls='period-day';else if(isPred)cls='predict-day';else if(inOvulation(ds))cls='ovu-day';
     if(isToday)cls+=(cls?' ':'')+'today';
-    html+=`<div class="cal-day ${cls}" style="${!cls?'background:var(--card-2)':''}"><div class="d-num">${d}</div><div class="d-dot"></div></div>`;
+    html+=`<div class="cal-day ${cls}" style="${!cls?'background:var(--card-2)':''}" onclick="pickPeriodDay('${ds}')"><div class="d-num">${d}</div><div class="d-dot"></div></div>`;
   }
   document.getElementById('periodGrid').innerHTML=html;
   const stats=calcPeriodStats();
