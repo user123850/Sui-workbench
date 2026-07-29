@@ -561,6 +561,10 @@ textarea.input{resize:vertical;min-height:90px;line-height:1.65}
 .book-author{font-size:12px;color:var(--text-3);margin-bottom:10px}
 .book-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .book-stars{color:#f0c14b;font-size:13px;letter-spacing:1px}
+.book-progress-wrap{margin:10px 0 6px}
+.book-progress-bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-bottom:6px}
+.book-progress-fill{height:100%;background:linear-gradient(90deg,var(--green),var(--green-d));border-radius:3px;transition:width .3s ease}
+.book-progress-text{font-size:11px;color:var(--text-3)}
 .book-section-title{font-size:12px;font-weight:600;color:var(--text-2);margin:14px 0 6px;display:flex;align-items:center;gap:6px}
 .book-quote{padding:10px 12px;background:var(--card-2);border-radius:0 var(--radius-xs) var(--radius-xs) 0;border-left:3px solid var(--pink);font-size:13px;color:var(--text-2);margin-bottom:8px;line-height:1.5}
 .book-note{padding:10px 12px;background:var(--card-2);border-radius:var(--radius-xs);font-size:13px;color:var(--text-2);margin-bottom:8px;line-height:1.5}
@@ -581,8 +585,6 @@ textarea.input{resize:vertical;min-height:90px;line-height:1.65}
 .pod-time{font-size:12px;color:var(--text-3)}
 .pod-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
 .pod-actions .btn{font-size:12px;padding:6px 12px}
-.pod-essay{background:var(--card-2);border-radius:var(--radius-xs);padding:10px 12px;font-size:12px;color:var(--text-2);margin-top:10px;line-height:1.5}
-.pod-essay-date{font-size:11px;color:var(--text-3);margin-top:4px}
 .pod-bar-chart{display:flex;flex-direction:column;gap:10px}
 .pod-bar-row{display:flex;align-items:center;gap:10px;font-size:12px}
 .pod-bar-label{width:90px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right;flex-shrink:0}
@@ -887,6 +889,19 @@ textarea.input{resize:vertical;min-height:90px;line-height:1.65}
           <span class="badge">📚 已读 <b id="bookCount">0</b> 本书</span>
         </div>
       </div>
+      <div class="card" id="timerCardRead">
+        <div class="card-title">⏱ 阅读计时器<span class="sub" id="readTimerTotal">今日 0 分钟</span></div>
+        <div style="text-align:center;margin-bottom:10px">
+          <span style="font-size:12px;color:var(--text-3);background:var(--card-2);padding:5px 12px;border-radius:14px" id="readTimerTarget">未选择书籍</span>
+        </div>
+        <div class="flex" style="align-items:center;justify-content:center;gap:16px;flex-wrap:wrap">
+          <div id="readTimerDisplay" style="font-size:36px;font-weight:700;color:var(--green-d);font-variant-numeric:tabular-nums;letter-spacing:1px">00:00:00</div>
+        </div>
+        <div class="flex" style="justify-content:center;gap:10px;margin-top:14px">
+          <button class="btn btn-pink" id="readTimerBtn" onclick="timerToggle('read')">开始</button>
+          <button class="btn btn-ghost btn-sm" onclick="timerReset('read')">重置</button>
+        </div>
+      </div>
       <div class="card">
         <div class="chips" id="bookChips">
           <span class="chip active" data-cat="all">📖 全部</span>
@@ -908,7 +923,7 @@ textarea.input{resize:vertical;min-height:90px;line-height:1.65}
     <section class="view" id="view-podcast">
       <div class="page-header">
         <h2>播客</h2>
-        <div class="desc">粘贴 Apple 播客链接自动导入，记录收听与随笔</div>
+        <div class="desc">粘贴 Apple 播客链接自动导入，记录收听时长与单集</div>
         <div class="row">
           <span class="badge">🎧 累计收听 <b id="podTotalMin">0</b> 分钟</span>
           <span class="badge" id="podShowsCount">📻 0 档节目</span>
@@ -1380,12 +1395,18 @@ function migrateBooks(){
     DB.set('books',books);
   }
 }
-function addBook(title,author,cat,rating,url){
-  const books=DB.get('books',[]);books.push({id:Date.now(),title,author,cat,rating,url,quotes:[],notes:[],totalPages:0,readPages:0});DB.set('books',books);renderBook();toast('已添加');
+function addBook(title,author,cat,rating,url,totalPages,readPages){
+  const books=DB.get('books',[]);books.push({id:Date.now(),title,author,cat,rating,url,quotes:[],notes:[],totalPages:parseInt(totalPages,10)||0,readPages:parseInt(readPages,10)||0});DB.set('books',books);renderBook();toast('已添加');
 }
-function updateBook(id,title,author,cat,rating,url){
+function updateBook(id,title,author,cat,rating,url,totalPages,readPages){
   const books=DB.get('books',[]);const b=books.find(x=>x.id===id);if(!b)return;
-  b.title=title;b.author=author;b.cat=cat;b.rating=rating;b.url=url;DB.set('books',books);renderBook();toast('已保存');
+  b.title=title;b.author=author;b.cat=cat;b.rating=rating;b.url=url;b.totalPages=parseInt(totalPages,10)||0;b.readPages=parseInt(readPages,10)||0;DB.set('books',books);renderBook();toast('已保存');
+}
+function updateBookProgress(id,readPages,totalPages){
+  const books=DB.get('books',[]);const b=books.find(x=>x.id===id);if(!b)return;
+  b.readPages=Math.max(0,parseInt(readPages,10)||0);
+  if(totalPages!==undefined&&totalPages!=='')b.totalPages=Math.max(1,parseInt(totalPages,10)||1);
+  DB.set('books',books);renderBook();toast('进度已更新');
 }
 function delBook(id){DB.set('books',DB.get('books',[]).filter(b=>b.id!==id));renderBook();}
 function addBookNote(id,type,text){
@@ -1409,10 +1430,18 @@ function renderBook(){
   document.getElementById('readStreak').textContent=`🔥 连续 ${calcStreak('book')} 天`;
   document.getElementById('bookList').innerHTML=filtered.length?filtered.map(b=>bookCard(b)).join(''):`<div class="book-empty">${bookFilter==='all'?'还没有书，点击上方添加新书':'该分类下暂无书籍'}</div>`;
 }
+function bookReadMinutes(id){
+  const log=DB.get('read_time_log',{});let sum=0;
+  Object.keys(log).forEach(k=>{if(k.startsWith(id+'_'))sum+=log[k]||0;});
+  return sum;
+}
 function bookCard(b){
   const stars='★'.repeat(b.rating||0)+'☆'.repeat(5-(b.rating||0));
   const lastQuote=b.quotes&&b.quotes.length?b.quotes[b.quotes.length-1]:null;
   const lastNote=b.notes&&b.notes.length?b.notes[b.notes.length-1]:null;
+  const total=parseInt(b.totalPages,10)||0,read=parseInt(b.readPages,10)||0;
+  const pct=total>0?Math.min(100,Math.round(read/total*100)):0;
+  const readMin=bookReadMinutes(b.id);
   return `<div class="book-card">
     <div class="book-card-header">
       <div class="book-cover">📖</div>
@@ -1422,11 +1451,16 @@ function bookCard(b){
         <div class="book-meta"><span class="tag g">${esc(b.cat||'成长')}</span><span class="book-stars">${stars}</span></div>
       </div>
     </div>
+    <div class="book-progress-wrap">
+      <div class="book-progress-bar"><div class="book-progress-fill" style="width:${pct}%"></div></div>
+      <div class="book-progress-text">${read}${total?' / '+total:''} 页${total?'（'+pct+'%）':''} · 累计阅读 ${readMin} 分钟</div>
+    </div>
     ${lastQuote?`<div class="book-section-title">📝 摘抄</div><div class="book-quote">${esc(lastQuote.text)}<div style="font-size:11px;color:var(--text-3);margin-top:4px">${lastQuote.date}</div></div>`:''}
     ${lastNote?`<div class="book-section-title">💡 笔记</div><div class="book-note">${esc(lastNote.text)}<div style="font-size:11px;color:var(--text-3);margin-top:4px">${lastNote.date}</div></div>`:''}
     <div class="book-actions">
-      ${b.url?`<button class="btn btn-pink btn-sm" onclick="openApp('${esc(b.url)}','book',${b.id})">▶ 阅读</button>`:'<span></span>'}
-      <button class="btn btn-line btn-sm" onclick="openBookNoteModal(${b.id})">写笔记</button>
+      <button class="btn btn-pink btn-sm" onclick="startReadTimer(${b.id})">⏱ 阅读计时</button>
+      ${b.url?`<a class="btn btn-line btn-sm" href="${esc(b.url)}" target="_blank">↗ 阅读链接</a>`:''}
+      <button class="btn btn-ghost btn-sm" onclick="openBookProgressModal(${b.id})">更新进度</button>
       <button class="btn btn-ghost btn-sm" onclick="openBookModal(${b.id})">编辑</button>
       <span class="task-del" onclick="delBook(${b.id})">×</span>
     </div>
@@ -1442,6 +1476,10 @@ function openBookModal(id){
       <select class="input" id="bmCat">${catOpts}</select>
       <input class="input" id="bmRating" placeholder="评分 1-5" type="number" min="0" max="5" value="${b?b.rating||0:0}">
       <input class="input" id="bmUrl" placeholder="阅读链接（可选）" value="${b?esc(b.url):''}">
+      <div style="display:flex;gap:10px">
+        <input class="input" id="bmTotal" placeholder="总页数" type="number" min="0" style="flex:1" value="${b?b.totalPages||'':''}">
+        <input class="input" id="bmRead" placeholder="已读页数" type="number" min="0" style="flex:1" value="${b?b.readPages||'':''}">
+      </div>
     </div>
   `,()=>{
     const title=document.getElementById('bmTitle').value.trim();if(!title)return toast('请输入书名'),false;
@@ -1449,7 +1487,26 @@ function openBookModal(id){
     const cat=document.getElementById('bmCat').value;
     const rating=Math.min(5,Math.max(0,parseInt(document.getElementById('bmRating').value,10)||0));
     const url=document.getElementById('bmUrl').value.trim();
-    if(id)updateBook(id,title,author,cat,rating,url);else addBook(title,author,cat,rating,url);
+    const total=document.getElementById('bmTotal').value;
+    const read=document.getElementById('bmRead').value;
+    if(id)updateBook(id,title,author,cat,rating,url,total,read);else addBook(title,author,cat,rating,url,total,read);
+  });
+}
+function openBookProgressModal(id){
+  const books=DB.get('books',[]);const b=books.find(x=>x.id===id);if(!b)return;
+  openModal('更新阅读进度 · '+esc(b.title),`
+    <div style="display:flex;gap:10px;flex-direction:column">
+      <div style="display:flex;gap:10px">
+        <input class="input" id="bpTotal" placeholder="总页数" type="number" min="1" style="flex:1" value="${b.totalPages||''}">
+        <input class="input" id="bpRead" placeholder="已读页数" type="number" min="0" style="flex:1" value="${b.readPages||''}">
+      </div>
+      <div style="font-size:12px;color:var(--text-3)">当前：${b.readPages||0}${b.totalPages?' / '+b.totalPages:''} 页${b.totalPages?'（'+Math.min(100,Math.round((b.readPages||0)/b.totalPages*100))+'%）':''}</div>
+    </div>
+  `,()=>{
+    const total=document.getElementById('bpTotal').value;
+    const read=document.getElementById('bpRead').value;
+    if(read==='')return toast('请输入已读页数'),false;
+    updateBookProgress(id,read,total);
   });
 }
 function openBookNoteModal(bookId){
@@ -1483,15 +1540,15 @@ const POD_SHOWS=[
   {id:'gaoqian',name:'搞钱女孩',icon:'💰',color:'#b8d4a8'}
 ];
 function applePodUrl(name){return 'https://podcasts.apple.com/cn/search?term='+encodeURIComponent(name);}
-function newShow(name,color){return {id:'pod'+Date.now()+Math.floor(Math.random()*999),name,color:color||'#c9b6d8',icon:'🎧',url:'',cover:'',desc:'',status:'todo',episodes:[],listenedCount:0,manualListens:0,totalMin:0,manualMin:0,essays:[]};}
+function newShow(name,color){return {id:'pod'+Date.now()+Math.floor(Math.random()*999),name,color:color||'#c9b6d8',icon:'🎧',url:'',cover:'',desc:'',status:'todo',episodes:[],listenedCount:0,manualListens:0,totalMin:0,manualMin:0,appleId:''};}
 function initPodShows(){
   if(DB.get('podShows',null)!==null)return;
   const old=DB.get('pod_show_records',{});
   const shows=POD_SHOWS.map(s=>{
-    const o=old[s.id]||{minutes:0,essays:[]};
+    const o=old[s.id]||{minutes:0};
     const sh=newShow(s.name,s.color);sh.id=s.id;
     sh.url=applePodUrl(s.name);sh.icon=s.icon;
-    sh.totalMin=o.minutes||0;sh.manualMin=o.minutes||0;sh.essays=o.essays||[];
+    sh.totalMin=o.minutes||0;sh.manualMin=o.minutes||0;
     sh.status=sh.totalMin>0?'listening':'todo';
     return sh;
   });
@@ -1513,22 +1570,30 @@ function addPodMinutes(id,min){
   const shows=getShows();const s=shows.find(x=>x.id===id);if(!s)return;
   s.manualMin=(s.manualMin||0)+min;recompute(s);saveShows(shows);renderPod();toast('已记录 '+min+' 分钟');
 }
-function addPodEssay(id,text){
-  if(!text||!text.trim())return toast('随笔不能为空');
-  const shows=getShows();const s=shows.find(x=>x.id===id);if(!s)return;
-  s.essays.push({id:Date.now(),text:text.trim(),date:today()});saveShows(shows);renderPod();toast('随笔已保存');
-}
-function delPodEssay(id,eid){
-  const shows=getShows();const s=shows.find(x=>x.id===id);if(!s)return;
-  s.essays=s.essays.filter(x=>x.id!==eid);saveShows(shows);renderPod();
-}
 function markEpisode(id,epId,listened){
   const shows=getShows();const s=shows.find(x=>x.id===id);if(!s)return;
   const e=(s.episodes||[]).find(x=>x.id===epId);if(!e)return;
   e.listened=listened;recompute(s);saveShows(shows);renderPod();
   toast(listened?('已标记收听：'+(e.title||'单集').slice(0,12)):'已取消');
 }
-function parseAppleId(url){const m=String(url||'').match(/id(\d+)/);return m?m[1]:null;}
+function parseAppleId(url){
+  const m=String(url||'').match(/id(\d+)/);
+  return m?m[1]:null;
+}
+function parseSearchTerm(url){
+  try{const u=new URL(String(url||''));if(u.pathname.includes('/search')){return decodeURIComponent(u.searchParams.get('term')||'');}}catch(e){}
+  return '';
+}
+function normName(s){return String(s||'').toLowerCase().replace(/[^\u4e00-\u9fa5a-z0-9]/g,'');}
+function findShowByName(shows,name){
+  const n=normName(name);if(!n)return null;
+  // 完全匹配
+  let s=shows.find(x=>normName(x.name)===n);
+  if(s)return s;
+  // 互相包含
+  s=shows.find(x=>{const nx=normName(x.name);return nx&&nx.length>2&&(n.includes(nx)||nx.includes(n));});
+  return s||null;
+}
 async function fetchApple(id){
   const res=await fetch('https://itunes.apple.com/lookup?id='+id+'&entity=podcastEpisode&media=podcast');
   if(!res.ok)throw new Error('网络请求失败');
@@ -1540,26 +1605,62 @@ async function fetchApple(id){
   }));
   return {
     name:pod.collectionName||pod.trackName||'',
+    appleId:String(pod.collectionId||pod.trackId||id),
     cover:(pod.artworkUrl600||'').replace('600x600','300x300'),
     desc:(pod.description||'').replace(/<[^>]+>/g,'').slice(0,160),
     url:pod.collectionViewUrl||pod.trackViewUrl||'',
     episodes:eps
   };
 }
+async function searchApplePodcast(term){
+  const res=await fetch('https://itunes.apple.com/search?term='+encodeURIComponent(term)+'&entity=podcast&limit=10');
+  if(!res.ok)throw new Error('网络请求失败');
+  const data=await res.json();
+  if(!data.results||!data.results.length)throw new Error('未搜索到该播客');
+  const pod=data.results[0];
+  return {
+    name:pod.collectionName||pod.trackName||term,
+    appleId:String(pod.collectionId||pod.trackId||''),
+    cover:(pod.artworkUrl600||'').replace('600x600','300x300'),
+    desc:(pod.description||'').replace(/<[^>]+>/g,'').slice(0,160),
+    url:pod.collectionViewUrl||pod.trackViewUrl||''
+  };
+}
+function mergeEpisodes(oldEps,newEps){
+  const map={};
+  (oldEps||[]).forEach(e=>{const key=e.trackId||e.id||e.title;map[key]=e;});
+  return newEps.map(e=>{
+    const key=e.trackId||e.id||e.title;
+    const old=map[key];
+    return old?{...e,listened:old.listened}:e;
+  });
+}
 async function addPodcastByUrl(){
   const url=(document.getElementById('podAddUrl').value||'').trim();
   if(!url)return toast('请先粘贴 Apple 播客链接');
-  const aid=parseAppleId(url);if(!aid)return toast('链接中未找到播客 ID（应为 .../id123456789）');
+  let info=null;
   toast('正在抓取播客信息…');
   try{
-    const info=await fetchApple(aid);const shows=getShows();
-    let s=shows.find(x=>x.name&&info.name&&x.name===info.name);
+    const aid=parseAppleId(url);
+    if(aid){info=await fetchApple(aid);}
+    else{
+      const term=parseSearchTerm(url);
+      if(!term)return toast('链接中未找到播客 ID，也不是有效的搜索链接');
+      const base=await searchApplePodcast(term);
+      if(!base.appleId)return toast('无法从搜索结果获取播客 ID');
+      info=await fetchApple(base.appleId);
+      info.name=info.name||base.name;info.cover=info.cover||base.cover;info.desc=info.desc||base.desc;info.url=info.url||base.url;
+    }
+    if(!info||!info.name)throw new Error('未获取到播客信息');
+    const shows=getShows();
+    // 优先按名称匹配已有节目
+    let s=findShowByName(shows,info.name);
     if(!s){s=newShow(info.name||'未命名播客');shows.push(s);}
-    s.cover=info.cover;s.desc=info.desc;s.url=info.url||s.url;
-    if(info.episodes.length){s.episodes=info.episodes;s.listenedCount=0;}
-    s.status=showStatus(s);saveShows(shows);
+    s.name=info.name;s.cover=info.cover||s.cover;s.desc=info.desc||s.desc;s.url=info.url||s.url;s.appleId=info.appleId||s.appleId;
+    if(info.episodes.length){s.episodes=mergeEpisodes(s.episodes,info.episodes);}
+    recompute(s);saveShows(shows);
     document.getElementById('podAddUrl').value='';renderPod();
-    toast('已导入：'+info.name+(info.episodes.length?(' · '+info.episodes.length+' 集'):''));
+    toast('已归属到：'+s.name+(info.episodes.length?(' · '+info.episodes.length+' 集'):''));
   }catch(e){toast('抓取失败：'+(e.message||'请检查网络或手动添加'));}
 }
 function renderPod(){
@@ -1575,7 +1676,7 @@ function renderPod(){
   const stMap={todo:['待收听','var(--text-3)','var(--card-2)'],listening:['收听中','#1a7f5a','#d6f0e4'],done:['已听完','#b8860b','#f7eccf']};
   document.getElementById('podList').innerHTML=shows.map(s=>{
     const st=s.status||showStatus(s);const prog=showProgress(s);const listened=showListened(s);
-    const sc=stMap[st]||stMap.todo;const lastEssay=s.essays.length?s.essays[s.essays.length-1]:null;
+    const sc=stMap[st]||stMap.todo;
     const eps=(s.episodes||[]);
     const epHtml=eps.length?`<div class="pod-eps"><div class="pod-eps-title">单集（${listened}/${eps.length}）</div>${eps.map(e=>`
       <div class="pod-ep ${e.listened?'listened':''}">
@@ -1595,35 +1696,82 @@ function renderPod(){
       <div class="pod-progress"><div class="pod-progress-bar" style="width:${prog}%;background:${s.color}"></div></div>
       ${epHtml}
       <div class="pod-actions">
-        <a class="btn btn-pink btn-sm" href="${esc(s.url||applePodUrl(s.name))}" target="_blank">↗ 原播客</a>
+        <a class="btn btn-pink btn-sm" href="${esc(s.url||applePodUrl(s.name))}" target="_blank" onclick="startPodListen('${s.id}')">↗ 原播客</a>
         <button class="btn btn-line btn-sm" onclick="openPodFetchModal('${s.id}')">🔄 刷新单集</button>
-        <button class="btn btn-ghost btn-sm" onclick="openPodEssayModal('${s.id}')">✏ 随笔</button>
-        <input class="input" id="podMin_${s.id}" type="number" placeholder="分钟" style="width:56px;text-align:center;font-size:12px;padding:6px">
-        <button class="btn btn-line btn-sm" onclick="addPodMinutes('${s.id}',document.getElementById('podMin_${s.id}').value);document.getElementById('podMin_${s.id}').value=''">+ 时长</button>
       </div>
-      ${lastEssay?`<div class="pod-essay">${esc(lastEssay.text)}<div class="pod-essay-date">${lastEssay.date} <span style="cursor:pointer;float:right" onclick="delPodEssay('${s.id}',${lastEssay.id})">×</span></div></div>`:''}
     </div>`;
   }).join('');
 }
 function openPodFetchModal(id){
   const s=getShows().find(x=>x.id===id);
+  const hasId=!!(s&&s.appleId);
   openModal('刷新单集 · '+(s?s.name:''),`
-    <p style="margin:0 0 10px;font-size:12px;color:var(--text-2)">粘贴该播客的 Apple 播客链接（含 /id数字），自动拉取最新单集清单。</p>
+    <p style="margin:0 0 10px;font-size:12px;color:var(--text-2)">${hasId?'已保存播客 ID，点确定即可拉取最新单集。':'粘贴该播客的 Apple 播客链接（含 /id数字），自动拉取最新单集清单。'}</p>
     <input class="input" id="podFetchUrl" placeholder="https://podcasts.apple.com/.../id123456789" value="${s&&s.url?esc(s.url):''}" style="width:100%">
   `,()=>{
-    const url=(document.getElementById('podFetchUrl').value||'').trim();
-    const aid=parseAppleId(url);
-    if(!aid){toast('链接中未找到播客 ID');return false;}
-    fetchApple(aid).then(info=>{
-      const shows=getShows();const sh=shows.find(x=>x.id===id);
-      if(sh){sh.cover=info.cover||sh.cover;sh.desc=info.desc||sh.desc;sh.url=info.url||sh.url;
-        if(info.episodes.length){sh.episodes=info.episodes;sh.listenedCount=0;}
-        sh.status=showStatus(sh);saveShows(shows);renderPod();toast('已刷新单集');}
-      closeModal();
-    }).catch(e=>{toast('抓取失败：'+(e.message||'请手动添加'));closeModal();});
-    return false;
+    let aid=s&&s.appleId?String(s.appleId):'';
+    if(!aid){
+      const url=(document.getElementById('podFetchUrl').value||'').trim();
+      aid=parseAppleId(url);
+      if(!aid){
+        const term=parseSearchTerm(url);
+        if(term){
+          searchApplePodcast(term).then(base=>{
+            if(!base.appleId){toast('无法从搜索结果获取播客 ID');return;}
+            doRefreshEpisodes(id,base.appleId);
+          }).catch(e=>toast('搜索失败：'+(e.message||'请手动添加')));
+          return false;
+        }
+        toast('链接中未找到播客 ID');return false;
+      }
+    }
+    doRefreshEpisodes(id,aid);return false;
   });
 }
+function doRefreshEpisodes(showId,aid){
+  fetchApple(aid).then(info=>{
+    const shows=getShows();const sh=shows.find(x=>x.id===showId);
+    if(sh){
+      sh.name=info.name||sh.name;sh.cover=info.cover||sh.cover;sh.desc=info.desc||sh.desc;sh.url=info.url||sh.url;sh.appleId=info.appleId||aid||sh.appleId;
+      if(info.episodes.length){sh.episodes=mergeEpisodes(sh.episodes,info.episodes);}
+      recompute(sh);saveShows(shows);renderPod();
+      toast('已刷新单集：新增 '+info.episodes.length+' 集');
+    }
+    closeModal();
+  }).catch(e=>{toast('抓取失败：'+(e.message||'请手动添加'));closeModal();});
+}
+/* ===== 播客自动收听计时 ===== */
+let podListenState=null;
+function startPodListen(showId){
+  // 如果正在听同一档，则停止并保存；不同档先保存上一个
+  if(podListenState&&podListenState.showId===showId){return stopPodListen(true);}
+  if(podListenState){stopPodListen(true);}
+  podListenState={showId,startTime:Date.now(),elapsed:0};
+  const s=getShows().find(x=>x.id===showId);
+  toast('开始记录收听：'+(s?s.name:''));
+}
+function stopPodListen(save=true){
+  if(!podListenState)return;
+  const elapsed=Date.now()-podListenState.startTime;
+  const showId=podListenState.showId;
+  podListenState=null;
+  if(!save||elapsed<5000)return; // 少于5秒不记录
+  const min=Math.max(1,Math.round(elapsed/60000));
+  const shows=getShows();const s=shows.find(x=>x.id===showId);if(!s)return;
+  s.manualMin=(s.manualMin||0)+min;recompute(s);saveShows(shows);renderPod();
+  // 同时记到日统计，让月度视图能显示
+  const rec=DB.get('pod_records',{});if(!rec[today()])rec[today()]=1;DB.set('pod_records',rec);
+  toast('已记录收听 '+min+' 分钟');
+}
+// 用户离开页面时保存
+window.addEventListener('beforeunload',()=>{if(podListenState)stopPodListen(true);});
+// 用户切回本页时视为暂停收听并保存（hidden→visible）
+function podVisibilityHandler(){
+  if(document.hidden)return; // 离开页面时不保存，继续计时
+  if(podListenState)stopPodListen(true);
+}
+document.addEventListener('visibilitychange',podVisibilityHandler);
+
 function openPodManualModal(){
   openModal('手动添加播客',`
     <input class="input" id="pmName" placeholder="播客名称" style="width:100%;margin-bottom:8px">
@@ -1636,14 +1784,6 @@ function openPodManualModal(){
     shows.push(s);saveShows(shows);renderPod();toast('已添加：'+name);
   });
 }
-function openPodEssayModal(id){
-  const s=getShows().find(x=>x.id===id);
-  openModal(s?('写随笔 · '+s.name):'写播客随笔',`
-    ${!s?`<select class="input" id="peShow" style="margin-bottom:10px">${getShows().map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('')}</select>`:''}
-    <textarea class="input" id="peText" rows="4" placeholder="听完这期的想法..."></textarea>
-  `,()=>{const sid=s?s.id:document.getElementById('peShow').value;addPodEssay(sid,document.getElementById('peText').value);});
-}
-
 /* resource item template */
 /* open app or url */
 function openApp(url,prefix,id){
@@ -1879,29 +2019,37 @@ function timerToggle(key,targetId=null){
     // 保存时长（秒转分钟）
     const min=Math.max(1,Math.round(t.sec/60));
     const logKey='timer_'+key+'_log';const rec=DB.get(logKey,{});rec[today()]=(rec[today()]||0)+min;DB.set(logKey,rec);
-    // 如果关联了学习任务，把时长记到该任务
-    if(key==='en'&&activeTimerTarget&&activeTimerTarget.id){
-      const wl=DB.get('word_time_log',{});
-      const k=`${activeTimerTarget.id}_${today()}`;
-      wl[k]=(wl[k]||0)+min;DB.set('word_time_log',wl);
+    // 如果关联了具体任务/书籍，把时长记到该条目
+    if(activeTimerTarget&&activeTimerTarget.id){
+      const logMap={'en':'word_time_log','read':'read_time_log'};
+      const lk=logMap[key];if(lk){
+        const wl=DB.get(lk,{});
+        const k=`${activeTimerTarget.id}_${today()}`;
+        wl[k]=(wl[k]||0)+min;DB.set(lk,wl);
+      }
     }
     activeTimerTarget=null;
     t.sec=0;
     document.getElementById(key+'TimerDisplay').textContent='00:00:00';
     document.getElementById(key+'TimerBtn').textContent='开始';
     document.getElementById(key+'TimerTotal').textContent='今日 '+timerTotalToday(key)+' 分钟';
-    if(key==='en')document.getElementById('enTimerTarget').textContent='未选择任务';
+    const targetEl=document.getElementById(key+'TimerTarget');
+    if(targetEl)targetEl.textContent=key==='en'?'未选择任务':'未选择书籍';
     toast('已记录'+(key==='en'?'学习':'阅读')+'时长');
     if(key==='en')renderWords();
+    if(key==='read')renderBook();
   }else{
     t.running=true;
-    if(key==='en'&&targetId){
+    const targetEl=document.getElementById(key+'TimerTarget');
+    if(targetId){
       activeTimerTarget={key,id:targetId};
-      const w=DB.get('words',[]).find(x=>x.id===targetId);
-      document.getElementById('enTimerTarget').textContent='正在为：'+(w?w.title:'');
+      let name='';
+      if(key==='en'){const w=DB.get('words',[]).find(x=>x.id===targetId);name=w?w.title:'';}
+      else if(key==='read'){const b=DB.get('books',[]).find(x=>x.id===targetId);name=b?b.title:'';}
+      if(targetEl)targetEl.textContent='正在为：'+(name||'');
     }else{
       activeTimerTarget={key,id:null};
-      if(key==='en')document.getElementById('enTimerTarget').textContent='未选择任务';
+      if(targetEl)targetEl.textContent=key==='en'?'未选择任务':'未选择书籍';
     }
     document.getElementById(key+'TimerBtn').textContent='结束';
     t.interval=setInterval(()=>{
@@ -1919,9 +2067,18 @@ function startWordTimer(id){
     timerToggle('en',id);
   }
 }
+function startReadTimer(id){
+  const t=timers['read'];
+  if(t.running){
+    if(activeTimerTarget&&activeTimerTarget.id===id){timerToggle('read');}
+    else{toast('请先结束当前计时');}
+  }else{
+    timerToggle('read',id);
+  }
+}
 function timerReset(key){
   const t=timers[key];
-  if(t.running){clearInterval(t.interval);t.running=false;activeTimerTarget=null;document.getElementById(key+'TimerBtn').textContent='开始';if(key==='en')document.getElementById('enTimerTarget').textContent='未选择任务';}
+  if(t.running){clearInterval(t.interval);t.running=false;activeTimerTarget=null;document.getElementById(key+'TimerBtn').textContent='开始';const targetEl=document.getElementById(key+'TimerTarget');if(targetEl)targetEl.textContent=key==='en'?'未选择任务':'未选择书籍';}
   t.sec=0;
   document.getElementById(key+'TimerDisplay').textContent='00:00:00';
 }
