@@ -610,6 +610,11 @@ textarea.input{resize:vertical;min-height:90px;line-height:1.65}
 .pod-ep-info{flex:1;min-width:0}
 .pod-ep-title{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pod-ep-dur{font-size:11px;color:var(--text-3)}
+.pod-ep-acts{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.pod-ep-link{font-size:11px;color:var(--pink,#e08aa0);text-decoration:none;padding:3px 7px;border-radius:8px;background:var(--card-2);white-space:nowrap}
+.pod-ep-link:hover{background:var(--pink,#e08aa0);color:#fff}
+.pod-eps-more{text-align:center;margin-top:8px}
+.pod-eps-more .btn{width:100%}
 @media(max-width:768px){
   .pod-grid{grid-template-columns:1fr}
   .pod-bar-label{width:70px}
@@ -1529,12 +1534,12 @@ function openBookNoteModal(bookId){
 
 /* ===== 播客 ===== */
 const POD_SHOWS=[
-  {id:'aotao',name:'凹凸电波',icon:'🎙',color:'#e8b4b8'},
   {id:'tanliren',name:'谭立人',icon:'🎤',color:'#9bb8c4'},
+  {id:'selfevo',name:'自我进化论',icon:'🦋',color:'#9db39a'},
+  {id:'aotao',name:'凹凸电波',icon:'🎙',color:'#e8b4b8'},
   {id:'xixifu',name:'西西弗高速',icon:'🏔',color:'#b8a9c9'},
   {id:'heartbeast',name:'心都野了 Heartbeast',icon:'❤️',color:'#d18a96'},
-  {id:'yanzhong',name:'岩中花束',icon:'🌸',color:'#f0c14b'},
-  {id:'selfevo',name:'自我进化论',icon:'🦋',color:'#9db39a'},
+  {id:'yanzhong',name:'岩中花述',icon:'🌸',color:'#f0c14b'},
   {id:'tashan',name:'她山石',icon:'⛰',color:'#a8a090'},
   {id:'qianjing',name:'钱婧老师的会客厅',icon:'💬',color:'#e2cf9a'},
   {id:'gaoqian',name:'搞钱女孩',icon:'💰',color:'#b8d4a8'}
@@ -1542,15 +1547,26 @@ const POD_SHOWS=[
 function applePodUrl(name){return 'https://podcasts.apple.com/cn/search?term='+encodeURIComponent(name);}
 function newShow(name,color){return {id:'pod'+Date.now()+Math.floor(Math.random()*999),name,color:color||'#c9b6d8',icon:'🎧',url:'',cover:'',desc:'',status:'todo',episodes:[],listenedCount:0,manualListens:0,totalMin:0,manualMin:0,appleId:''};}
 function initPodShows(){
-  if(DB.get('podShows',null)!==null)return;
-  const old=DB.get('pod_show_records',{});
-  const shows=POD_SHOWS.map(s=>{
-    const o=old[s.id]||{minutes:0};
-    const sh=newShow(s.name,s.color);sh.id=s.id;
-    sh.url=applePodUrl(s.name);sh.icon=s.icon;
-    sh.totalMin=o.minutes||0;sh.manualMin=o.minutes||0;
-    sh.status=sh.totalMin>0?'listening':'todo';
-    return sh;
+  const existing=DB.get('podShows',null);
+  if(existing===null){
+    const old=DB.get('pod_show_records',{});
+    const shows=POD_SHOWS.map(s=>{
+      const o=old[s.id]||{minutes:0};
+      const sh=newShow(s.name,s.color);sh.id=s.id;
+      sh.url=applePodUrl(s.name);sh.icon=s.icon;
+      sh.totalMin=o.minutes||0;sh.manualMin=o.minutes||0;
+      sh.status=sh.totalMin>0?'listening':'todo';
+      return sh;
+    });
+    DB.set('podShows',shows);
+    return;
+  }
+  // 已初始化过：同步固定节目的名称（如改名）并补全新增的固定节目
+  let shows=existing;
+  POD_SHOWS.forEach(s=>{
+    const sh=shows.find(x=>x.id===s.id);
+    if(sh){sh.name=s.name;}
+    else{const ns=newShow(s.name,s.color);ns.id=s.id;ns.url=applePodUrl(s.name);ns.icon=s.icon;shows.push(ns);}
   });
   DB.set('podShows',shows);
 }
@@ -1601,8 +1617,8 @@ async function fetchApple(id){
   if(!data.results||!data.results.length)throw new Error('未找到该播客');
   const pod=data.results[0];
   const eps=data.results.slice(1).filter(r=>r.wrapperType==='podcastEpisode').map(r=>({
-    id:'ep'+r.trackId,title:r.trackName||'单集',durMin:Math.max(1,Math.round((r.trackTimeMillis||0)/60000)),listened:false
-  }));
+    id:'ep'+r.trackId,title:r.trackName||'单集',durMin:Math.max(1,Math.round((r.trackTimeMillis||0)/60000)),listened:false,url:r.trackViewUrl||'',date:r.releaseDate||''
+  })).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
   return {
     name:pod.collectionName||pod.trackName||'',
     appleId:String(pod.collectionId||pod.trackId||id),
@@ -1663,8 +1679,18 @@ async function addPodcastByUrl(){
     toast('已归属到：'+s.name+(info.episodes.length?(' · '+info.episodes.length+' 集'):''));
   }catch(e){toast('抓取失败：'+(e.message||'请检查网络或手动添加'));}
 }
+let podExpanded=new Set();
+function togglePodExpand(id){if(podExpanded.has(id))podExpanded.delete(id);else podExpanded.add(id);renderPod();}
 function renderPod(){
-  const shows=getShows();
+  // 固定节目始终按 POD_SHOWS 顺序排在前面，新增节目置后
+  const fixedOrder=POD_SHOWS.map(s=>s.id);
+  const shows=getShows().slice().sort((a,b)=>{
+    const ia=fixedOrder.indexOf(a.id),ib=fixedOrder.indexOf(b.id);
+    if(ia===-1&&ib===-1)return 0;
+    if(ia===-1)return 1;
+    if(ib===-1)return -1;
+    return ia-ib;
+  });
   const totalMin=shows.reduce((a,s)=>a+showTotalMin(s),0);
   document.getElementById('podTotalMin').textContent=totalMin;
   const cnt=document.getElementById('podShowsCount');if(cnt)cnt.textContent='📻 '+shows.length+' 档节目';
@@ -1678,11 +1704,18 @@ function renderPod(){
     const st=s.status||showStatus(s);const prog=showProgress(s);const listened=showListened(s);
     const sc=stMap[st]||stMap.todo;
     const eps=(s.episodes||[]);
-    const epHtml=eps.length?`<div class="pod-eps"><div class="pod-eps-title">单集（${listened}/${eps.length}）</div>${eps.map(e=>`
+    const expanded=podExpanded.has(s.id);
+    const shown=expanded?eps:eps.slice(0,5);
+    const epList=shown.map(e=>`
       <div class="pod-ep ${e.listened?'listened':''}">
         <div class="pod-ep-info"><div class="pod-ep-title">${esc(e.title||'单集')}</div><div class="pod-ep-dur">${e.durMin} 分钟</div></div>
-        <button class="btn btn-sm ${e.listened?'btn-ghost':'btn-line'}" onclick="markEpisode('${s.id}','${e.id}',${!e.listened})">${e.listened?'✓ 已听':'标记收听'}</button>
-      </div>`).join('')}</div>`:'';
+        <div class="pod-ep-acts">
+          ${e.url?`<a class="pod-ep-link" href="${esc(e.url)}" target="_blank" onclick="startPodListen('${s.id}')">↗ 单集</a>`:''}
+          <button class="btn btn-sm ${e.listened?'btn-ghost':'btn-line'}" onclick="markEpisode('${s.id}','${e.id}',${!e.listened})">${e.listened?'✓ 已听':'标记收听'}</button>
+        </div>
+      </div>`).join('');
+    const moreBtn=eps.length>5?`<div class="pod-eps-more"><button class="btn btn-ghost btn-sm" onclick="togglePodExpand('${s.id}')">${expanded?('收起 · 共 '+eps.length+' 集'):('查看全部 '+eps.length+' 集')}</button></div>`:'';
+    const epHtml=eps.length?`<div class="pod-eps"><div class="pod-eps-title">单集（${listened}/${eps.length}）</div>${epList}${moreBtn}</div>`:'';
     return `<div class="pod-card">
       <div class="pod-card-top">
         <div class="pod-cover" style="${s.cover?('background-image:url(\''+s.cover+'\')'):('background:'+s.color+'33')}">${s.cover?'':(s.icon||'🎧')}</div>
@@ -1694,11 +1727,11 @@ function renderPod(){
       </div>
       ${s.desc?`<div class="pod-desc">${esc(s.desc)}</div>`:''}
       <div class="pod-progress"><div class="pod-progress-bar" style="width:${prog}%;background:${s.color}"></div></div>
-      ${epHtml}
       <div class="pod-actions">
         <a class="btn btn-pink btn-sm" href="${esc(s.url||applePodUrl(s.name))}" target="_blank" onclick="startPodListen('${s.id}')">↗ 原播客</a>
         <button class="btn btn-line btn-sm" onclick="openPodFetchModal('${s.id}')">🔄 刷新单集</button>
       </div>
+      ${epHtml}
     </div>`;
   }).join('');
 }
@@ -1998,6 +2031,7 @@ function openModal(title,bodyHtml,onOk){
   document.getElementById('modalTitle').textContent=title;
   document.getElementById('modalBody').innerHTML=bodyHtml;
   const okBtn=document.getElementById('modalOk');
+  okBtn.textContent='确定';
   okBtn.onclick=()=>{const r=onOk();if(r!==false)closeModal();};
   document.getElementById('modal').classList.add('show');
 }
